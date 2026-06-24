@@ -261,7 +261,7 @@
 
             <div class="download-container">
                 <button class="download-btn" id="btn-hd">標準保存</button>
-                <button class="download-btn" id="btn-lite">ココフォリア用 (軽量保存)</button>
+                <button class="download-btn" id="btn-lite">軽量保存</button>
             </div>
         </div>
 
@@ -279,144 +279,15 @@
         </div>
     </div>
 
-<script>
+    <script>
         const card = document.getElementById('card');
         const cardBg = document.getElementById('cardBg');
         const cardContent = document.getElementById('cardContent');
 
-        // 【修正・統合版】自動文字縮小システム
+        // 【修正・確定版】自動文字縮小システム
         function autoShrink() {
-            // 1. まずは各セクションの文字サイズを、ユーザーが入力した元の数値に「完全にリセット」する
+            // 1. 各セクションの文字サイズを、ユーザーの設定値に「完全にリセット」
             resetSizes();
 
-            // 枠線の太さを取得（0や取得できない場合は0にする）
-            const borderWidth = parseInt(card.style.borderWidth) || 0;
-            // 文字が入る最大高さを計算
-            const maxHeight = card.clientHeight - (borderWidth * 2);
-            
-            let currentHeight = cardContent.scrollHeight;
-            
-            // 設定された基本サイズを取得
-            let s1 = parseInt(document.getElementById('size1').value) || 14;
-            let s2 = parseInt(document.getElementById('size2').value) || 14;
-            let s3 = parseInt(document.getElementById('size3').value) || 14;
-
-            // 2. はみ出している間だけ、全体の文字サイズを1pxずつ小さくする（最小8pxまで）
-            while (currentHeight > maxHeight && (s1 > 8 || s2 > 8 || s3 > 8)) {
-                if(s1 > 8) s1--;
-                if(s2 > 8) s2--;
-                if(s3 > 8) s3--;
-                
-                document.getElementById('section1').style.fontSize = s1 + 'px';
-                document.getElementById('section2').style.fontSize = s2 + 'px';
-                document.getElementById('section3').style.fontSize = s3 + 'px';
-                
-                currentHeight = cardContent.scrollHeight; // 現在の高さを再計測
-            }
-        }
-
-        // 文字サイズをユーザーの設定値に戻す関数
-        function resetSizes() {
-            document.getElementById('section1').style.fontSize = (document.getElementById('size1').value || 22) + 'px';
-            document.getElementById('section2').style.fontSize = (document.getElementById('size2').value || 16) + 'px';
-            document.getElementById('section3').style.fontSize = (document.getElementById('size3').value || 14) + 'px';
-        }
-
-        // 文字入力時の連動（文字を入れ替えてから縮小チェック）
-        ['text1', 'text2', 'text3'].forEach(id => {
-            document.getElementById(id).addEventListener('input', (e) => {
-                const targetId = id.replace('text', 'section');
-                document.getElementById(targetId).textContent = e.target.value;
-                autoShrink();
-            });
-        });
-
-        // 文字サイズ（数値入力）が変更された時の連動
-        document.querySelectorAll('.size-input').forEach(input => {
-            input.addEventListener('input', () => { 
-                autoShrink(); 
-            });
-        });
-
-        // 【重要】枠線の太さが変更された時の連動
-        document.getElementById('borderWidth').addEventListener('input', (e) => {
-            card.style.borderWidth = e.target.value + 'px';
-            autoShrink(); // 枠のサイズが変わったら即座に文字サイズも再計算する
-        });
-
-        // 縦方向の配置切り替え（上詰め / 均等）
-        document.getElementById('valignSelect').addEventListener('change', (e) => {
-            cardContent.style.justifyContent = e.target.value;
-            autoShrink(); // 配置が変わった際も念のため再計算
-        });
-
-        // 背景不透明度（薄さ）の変更
-        document.getElementById('bgOpacity').addEventListener('input', (e) => {
-            cardBg.style.opacity = e.target.value / 100;
-        });
-
-        // 文字色・配置・枠線色
-        document.querySelectorAll('.color-picker').forEach(picker => {
-            picker.addEventListener('input', (e) => {
-                document.getElementById(e.target.getAttribute('data-target')).style.color = e.target.value;
-            });
-        });
-
-        document.querySelectorAll('.align-select').forEach(select => {
-            select.addEventListener('change', (e) => {
-                document.getElementById(e.target.getAttribute('data-target')).style.textAlign = e.target.value;
-            });
-        });
-
-        document.getElementById('borderColor').addEventListener('input', (e) => {
-            card.style.borderColor = e.target.value;
-            document.querySelectorAll('.divider').forEach(div => { div.style.backgroundColor = e.target.value; });
-        });
-
-        // 背景画像切り替え
-        const bgSelect = document.getElementById('bgSelect');
-        const imageUpload = document.getElementById('imageUpload');
-        bgSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'upload') {
-                imageUpload.style.display = 'block';
-            } else {
-                imageUpload.style.display = 'none';
-                cardBg.style.backgroundImage = e.target.value ? `url('${e.target.value}')` : 'none';
-            }
-        });
-
-        imageUpload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => { cardBg.style.backgroundImage = `url('${ev.target.result}')`; };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // 保存システム（画質選択）
-        function saveCard(scaleValue, filename) {
-            const btn = event.target;
-            const originalText = btn.innerText;
-            btn.innerText = "作成中...";
-            btn.disabled = true;
-
-            html2canvas(card, { 
-                useCORS: true, 
-                scale: scaleValue,
-                logging: false
-            }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = filename;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                btn.innerText = originalText;
-                btn.disabled = false;
-            });
-        }
-
-        document.getElementById('btn-hd').addEventListener('click', (e) => saveCard(1, 'card-standard.png'));
-        document.getElementById('btn-lite').addEventListener('click', (e) => saveCard(0.8, 'card-lite.png'));
-    </script>
-</body>
-</html>
+            // 枠線の太さを取得（0や空欄なら0）
+            const borderWidth = parseInt(document.getElementById('border
