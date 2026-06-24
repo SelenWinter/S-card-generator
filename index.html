@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3区画カードジェネレーター</title>
+    <title>高機能カードジェネレーター</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body {
@@ -12,7 +12,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 15px;
             margin: 0;
         }
 
@@ -25,10 +25,10 @@
             width: 100%;
         }
 
-        /* 操作パネル */
+        /* 操作パネル（全体をコンパクトに調整） */
         .control-panel {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             flex: 1;
@@ -37,43 +37,71 @@
             overflow-y: auto;
         }
 
+        /* 各区画の設定エリアをコンパクトにするための横並びスタイル */
         .control-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             padding: 10px;
             background: #f8f9fa;
             border-radius: 8px;
+            border: 1px solid #e9ecef;
         }
 
-        label {
-            display: block;
+        .group-title {
             font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 14px;
+            font-size: 13px;
+            color: #333;
+            margin-bottom: 8px;
+            border-left: 3px solid #007bff;
+            padding-left: 6px;
         }
 
-        input[type="text"], textarea, select {
+        /* 細かい設定を1行にまとめるコンテナ */
+        .inline-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .inline-controls label {
+            font-size: 11px;
+            color: #666;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* 入力部品のコンパクト化 */
+        input[type="text"], input[type="number"], select, textarea {
             width: 100%;
-            padding: 8px;
+            padding: 6px;
             box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 4px;
-            margin-bottom: 5px;
+            font-size: 13px;
         }
 
-        textarea { height: 80px; resize: vertical; }
+        /* 横並び用の小さい入力欄 */
+        input.small-input { width: 55px; padding: 4px; text-align: center; }
+        select.small-select { width: 75px; padding: 4px; }
+        input.color-input { width: 35px; height: 26px; padding: 0; border: none; cursor: pointer; }
+
+        textarea { height: 65px; resize: vertical; margin-top: 5px; }
 
         /* 保存ボタン */
         .download-btn {
             width: 100%;
-            padding: 15px;
+            padding: 12px;
             background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 5px;
         }
         .download-btn:hover { background-color: #218838; }
 
@@ -90,91 +118,110 @@
         #card {
             width: 350px;
             height: 490px;
-            border: 12px solid #333;
+            border: 12px solid #333; /* 初期値 */
             box-sizing: border-box;
             position: relative;
             background-color: #fff;
             background-size: cover;
             background-position: center;
-            overflow: hidden; /* はみ出した文字を隠す */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            padding: 0; /* 最上部から表示するためゼロ */
+            padding: 0;
         }
 
-        /* 共通の区画スタイル */
+        /* 区画スタイル */
         .section {
-            padding: 0 10px; /* 左右に少しだけ隙間 */
+            padding: 0 12px;
             width: 100%;
             box-sizing: border-box;
             white-space: pre-wrap;
             word-wrap: break-word;
-            color: #000;
-            /* 文字を見やすくするフチ取り */
             text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff;
+            
+            /* 初期状態の設定 */
+            font-size: 18px;
+            color: #000000;
+            text-align: left;
         }
 
-        /* 区切り線 */
         .divider {
             width: 100%;
             height: 2px;
             background-color: #333;
             margin: 5px 0;
-            flex-shrink: 0; /* 線が潰れないように */
+            flex-shrink: 0;
         }
 
-        /* 最初の区画は一番上から */
-        #section1 {
-            padding-top: 5px;
-        }
+        #section1 { padding-top: 6px; }
     </style>
 </head>
 <body>
 
-    <h1>3区画カードジェネレーター</h1>
+    <h2 style="margin: 0 0 15px 0; color: #333; font-size: 22px;">高機能カードジェネレーター</h2>
 
     <div class="container">
         <div class="control-panel">
             
             <div class="control-group">
-                <label>基本設定</label>
-                <input type="color" id="borderColor" value="#333333"> 枠線の色
-                <select id="bgSelect" style="margin-top:10px;">
-                    <option value="">背景なし（白）</option>
-                    <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500">（サンプル）グラデーション</option>
-                    <option value="upload">画像をアップロードする</option>
-                </select>
+                <div class="group-title">全体・枠線設定</div>
+                <div class="inline-controls">
+                    <label>枠色:<input type="color" id="borderColor" class="color-input" value="#333333"></label>
+                    <label>枠太さ:<input type="number" id="borderWidth" class="small-input" value="12" min="0">px</label>
+                    <select id="bgSelect" style="flex: 1; min-width: 120px;">
+                        <option value="">背景なし（白）</option>
+                        <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500">（サンプル）グラデーション</option>
+                        <option value="upload">画像をアップロードする</option>
+                    </select>
+                </div>
                 <input type="file" id="imageUpload" accept="image/*" style="display:none; margin-top:5px;">
             </div>
 
             <div class="control-group">
-                <label>【区画１】最上部</label>
-                <select class="font-size-sel" data-target="section1">
-                    <option value="16px">小（16px）</option>
-                    <option value="20px" selected>中（20px）</option>
-                    <option value="28px">大（28px）</option>
-                    <option value="36px">特大（36px）</option>
-                </select>
+                <div class="group-title">【区画１】最上部</div>
+                <div class="inline-controls">
+                    <label>サイズ:<input type="number" class="size-input small-input" data-target="section1" value="22">px</label>
+                    <label>色:<input type="color" class="color-picker color-input" data-target="section1" value="#000000"></label>
+                    <label>配置:
+                        <select class="align-select small-select" data-target="section1">
+                            <option value="left" selected>左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </label>
+                </div>
                 <textarea id="text1" placeholder="文字列１">カードのタイトルなど</textarea>
             </div>
 
             <div class="control-group">
-                <label>【区画２】中央</label>
-                <select class="font-size-sel" data-target="section2">
-                    <option value="14px">小（14px）</option>
-                    <option value="18px" selected>中（18px）</option>
-                    <option value="24px">大（24px）</option>
-                </select>
+                <div class="group-title">【区画２】中央</div>
+                <div class="inline-controls">
+                    <label>サイズ:<input type="number" class="size-input small-input" data-target="section2" value="16">px</label>
+                    <label>色:<input type="color" class="color-picker color-input" data-target="section2" value="#000000"></label>
+                    <label>配置:
+                        <select class="align-select small-select" data-target="section2">
+                            <option value="left" selected>左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </label>
+                </div>
                 <textarea id="text2" placeholder="文字列２">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</textarea>
             </div>
 
             <div class="control-group">
-                <label>【区画３】最下部</label>
-                <select class="font-size-sel" data-target="section3">
-                    <option value="12px">最小（12px）</option>
-                    <option value="16px" selected>小（16px）</option>
-                    <option value="20px">中（20px）</option>
-                </select>
+                <div class="group-title">【区画３】最下部</div>
+                <div class="inline-controls">
+                    <label>サイズ:<input type="number" class="size-input small-input" data-target="section3" value="14">px</label>
+                    <label>色:<input type="color" class="color-picker color-input" data-target="section3" value="#000000"></label>
+                    <label>配置:
+                        <select class="align-select small-select" data-target="section3">
+                            <option value="left" selected>左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </label>
+                </div>
                 <textarea id="text3" placeholder="文字列３">フレーバーテキストや注釈など</textarea>
             </div>
 
@@ -183,49 +230,66 @@
 
         <div class="preview-area">
             <div id="card">
-                <div id="section1" class="section">カードのタイトルなど</div>
+                <div id="section1" class="section" style="font-size: 22px;">カードのタイトルなど</div>
                 <div class="divider"></div>
-                <div id="section2" class="section">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</div>
+                <div id="section2" class="section" style="font-size: 16px;">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</div>
                 <div class="divider"></div>
-                <div id="section3" class="section">フレーバーテキストや注釈など</div>
+                <div id="section3" class="section" style="font-size: 14px;">フレーバーテキストや注釈など</div>
             </div>
         </div>
     </div>
 
     <script>
-        // 要素の取得
-        const borderColorInput = document.getElementById('borderColor');
-        const bgSelect = document.getElementById('bgSelect');
-        const imageUpload = document.getElementById('imageUpload');
         const card = document.getElementById('card');
-        const downloadBtn = document.getElementById('downloadBtn');
 
-        // 文字入力の反映
-        const texts = ['text1', 'text2', 'text3'];
-        texts.forEach(id => {
+        // 文字入力のリアルタイム反映
+        ['text1', 'text2', 'text3'].forEach(id => {
             document.getElementById(id).addEventListener('input', (e) => {
                 const targetId = id.replace('text', 'section');
                 document.getElementById(targetId).textContent = e.target.value;
             });
         });
 
-        // フォントサイズの反映
-        document.querySelectorAll('.font-size-sel').forEach(sel => {
-            sel.addEventListener('change', (e) => {
+        // 文字サイズ入力（テキストボックス・数値）の反映
+        document.querySelectorAll('.size-input').forEach(input => {
+            input.addEventListener('input', (e) => {
                 const targetId = e.target.getAttribute('data-target');
-                document.getElementById(targetId).style.fontSize = e.target.value;
+                document.getElementById(targetId).style.fontSize = e.target.value + 'px';
             });
         });
 
-        // 枠線の色
-        borderColorInput.addEventListener('input', (e) => {
+        // 文字色選択の反映
+        document.querySelectorAll('.color-picker').forEach(picker => {
+            picker.addEventListener('input', (e) => {
+                const targetId = e.target.getAttribute('data-target');
+                document.getElementById(targetId).style.color = e.target.value;
+            });
+        });
+
+        // 文字配置（左寄せ・中央・右寄せ）の反映
+        document.querySelectorAll('.align-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const targetId = e.target.getAttribute('data-target');
+                document.getElementById(targetId).style.textAlign = e.target.value;
+            });
+        });
+
+        // 枠線の色と区切り線の色連動
+        document.getElementById('borderColor').addEventListener('input', (e) => {
             card.style.borderColor = e.target.value;
             document.querySelectorAll('.divider').forEach(div => {
                 div.style.backgroundColor = e.target.value;
             });
         });
 
-        // 背景切り替え
+        // 枠線の太さ（数値入力）の反映
+        document.getElementById('borderWidth').addEventListener('input', (e) => {
+            card.style.borderWidth = e.target.value + 'px';
+        });
+
+        // 背景切り替え・アップロード
+        const bgSelect = document.getElementById('bgSelect');
+        const imageUpload = document.getElementById('imageUpload');
         bgSelect.addEventListener('change', (e) => {
             if (e.target.value === 'upload') {
                 imageUpload.style.display = 'block';
@@ -235,33 +299,26 @@
             }
         });
 
-        // アップロード画像反映
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => {
-                    card.style.backgroundImage = `url('${ev.target.result}')`;
-                };
+                reader.onload = (ev) => { card.style.backgroundImage = `url('${ev.target.result}')`; };
                 reader.readAsDataURL(file);
             }
         });
 
-        // 【重要】画像として保存する機能
+        // 画像保存機能
+        const downloadBtn = document.getElementById('downloadBtn');
         downloadBtn.addEventListener('click', () => {
-            // 保存前にボタンを少し無効化（連打防止）
             downloadBtn.innerText = "作成中...";
             downloadBtn.disabled = true;
 
-            html2canvas(card, {
-                useCORS: true, // ネット上の画像も許可
-                scale: 2       // 画質を2倍にする
-            }).then(canvas => {
+            html2canvas(card, { useCORS: true, scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
                 link.download = 'my-card.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                
                 downloadBtn.innerText = "カードを画像として保存";
                 downloadBtn.disabled = false;
             });
