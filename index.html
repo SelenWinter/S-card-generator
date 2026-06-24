@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>カスタムカードジェネレーター</title>
+    <title>3区画カードジェネレーター</title>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
-        /* 画面全体のデザイン */
         body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
             background-color: #f0f2f5;
             display: flex;
             flex-direction: column;
@@ -16,36 +16,39 @@
             margin: 0;
         }
 
-        h1 { color: #333; margin-bottom: 20px; }
-
         .container {
             display: flex;
             flex-wrap: wrap;
-            gap: 30px;
+            gap: 20px;
             justify-content: center;
-            max-width: 1000px;
+            max-width: 1100px;
             width: 100%;
         }
 
-        /* 操作パネルの設定 */
+        /* 操作パネル */
         .control-panel {
             background: white;
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             flex: 1;
-            min-width: 300px;
+            min-width: 350px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .control-group {
             margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
         }
 
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
-            color: #555;
+            font-size: 14px;
         }
 
         input[type="text"], textarea, select {
@@ -54,153 +57,214 @@
             box-sizing: border-box;
             border: 1px solid #ccc;
             border-radius: 4px;
+            margin-bottom: 5px;
         }
 
-        textarea { height: 120px; resize: vertical; }
+        textarea { height: 80px; resize: vertical; }
 
-        /* カードのプレビュー領域（ポーカーサイズ比率 63mm × 88mm に近い縦横比） */
+        /* 保存ボタン */
+        .download-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .download-btn:hover { background-color: #218838; }
+
+        /* カードプレビュー */
         .preview-area {
             flex: 1;
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            min-width: 300px;
+            min-width: 360px;
         }
 
-        .card {
+        /* カード本体 */
+        #card {
             width: 350px;
             height: 490px;
-            border: 10px solid #333;
-            border-radius: 15px;
+            border: 12px solid #333;
             box-sizing: border-box;
             position: relative;
             background-color: #fff;
             background-size: cover;
             background-position: center;
-            overflow: hidden;
+            overflow: hidden; /* はみ出した文字を隠す */
             display: flex;
             flex-direction: column;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            padding: 0; /* 最上部から表示するためゼロ */
         }
 
-        /* カード内のテキスト領域（最上部から最下部まで埋められる設定） */
-        .card-content {
-            padding: 15px;
-            height: 100%;
+        /* 共通の区画スタイル */
+        .section {
+            padding: 0 10px; /* 左右に少しだけ隙間 */
+            width: 100%;
             box-sizing: border-box;
-            color: #000;
-            text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white; /* 文字を読みやすくするフチ取り */
-            white-space: pre-wrap; /* 改行を反映 */
+            white-space: pre-wrap;
             word-wrap: break-word;
-            overflow-y: auto; /* 文字が溢れた場合はカード内でスクロール可能に */
-            font-size: 16px;
-            line-height: 1.5;
+            color: #000;
+            /* 文字を見やすくするフチ取り */
+            text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff;
         }
 
-        .card-title {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 10px;
-            border-bottom: 2px solid rgba(0,0,0,0.2);
-            padding-bottom: 5px;
+        /* 区切り線 */
+        .divider {
+            width: 100%;
+            height: 2px;
+            background-color: #333;
+            margin: 5px 0;
+            flex-shrink: 0; /* 線が潰れないように */
+        }
+
+        /* 最初の区画は一番上から */
+        #section1 {
+            padding-top: 5px;
         }
     </style>
 </head>
 <body>
 
-    <h1>カードジェネレーター</h1>
+    <h1>3区画カードジェネレーター</h1>
 
     <div class="container">
         <div class="control-panel">
+            
             <div class="control-group">
-                <label for="borderColor">枠線の色</label>
-                <input type="color" id="borderColor" value="#333333">
-            </div>
-
-            <div class="control-group">
-                <label for="bgSelect">背景画像の選択</label>
-                <select id="bgSelect">
-                    <option value="">（サンプル1）シンプルな白</option>
-                    <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500">（サンプル2）グラデーション</option>
-                    <option value="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=500">（サンプル3）植物・木目調</option>
-                    <option value="upload">自分の画像をアップロードする</option>
+                <label>基本設定</label>
+                <input type="color" id="borderColor" value="#333333"> 枠線の色
+                <select id="bgSelect" style="margin-top:10px;">
+                    <option value="">背景なし（白）</option>
+                    <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500">（サンプル）グラデーション</option>
+                    <option value="upload">画像をアップロードする</option>
                 </select>
-            </div>
-
-            <div class="control-group" id="uploadGroup" style="display: none;">
-                <label for="imageUpload">背景画像を添付</label>
-                <input type="file" id="imageUpload" accept="image/*">
+                <input type="file" id="imageUpload" accept="image/*" style="display:none; margin-top:5px;">
             </div>
 
             <div class="control-group">
-                <label for="inputTitle">カードタイトル</label>
-                <input type="text" id="inputTitle" value="ここにタイトル">
+                <label>【区画１】最上部</label>
+                <select class="font-size-sel" data-target="section1">
+                    <option value="16px">小（16px）</option>
+                    <option value="20px" selected>中（20px）</option>
+                    <option value="28px">大（28px）</option>
+                    <option value="36px">特大（36px）</option>
+                </select>
+                <textarea id="text1" placeholder="文字列１">カードのタイトルなど</textarea>
             </div>
 
             <div class="control-group">
-                <label for="inputText">本文（画面最下部まで書き込めます）</label>
-                <textarea id="inputText">ここに説明文を入力します。改行をすればそのままカードに反映されます。文字をたくさん書くと、上から下までギッシリ埋めることができます。</textarea>
+                <label>【区画２】中央</label>
+                <select class="font-size-sel" data-target="section2">
+                    <option value="14px">小（14px）</option>
+                    <option value="18px" selected>中（18px）</option>
+                    <option value="24px">大（24px）</option>
+                </select>
+                <textarea id="text2" placeholder="文字列２">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</textarea>
             </div>
+
+            <div class="control-group">
+                <label>【区画３】最下部</label>
+                <select class="font-size-sel" data-target="section3">
+                    <option value="12px">最小（12px）</option>
+                    <option value="16px" selected>小（16px）</option>
+                    <option value="20px">中（20px）</option>
+                </select>
+                <textarea id="text3" placeholder="文字列３">フレーバーテキストや注釈など</textarea>
+            </div>
+
+            <button class="download-btn" id="downloadBtn">カードを画像として保存</button>
         </div>
 
         <div class="preview-area">
-            <div class="card" id="card">
-                <div class="card-content">
-                    <div class="card-title" id="cardTitle">ここにタイトル</div>
-                    <div id="cardBody">ここに説明文を入力します。</div>
-                </div>
+            <div id="card">
+                <div id="section1" class="section">カードのタイトルなど</div>
+                <div class="divider"></div>
+                <div id="section2" class="section">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</div>
+                <div class="divider"></div>
+                <div id="section3" class="section">フレーバーテキストや注釈など</div>
             </div>
         </div>
     </div>
 
     <script>
-        // 画面の要素をプログラムに覚えさせる
+        // 要素の取得
         const borderColorInput = document.getElementById('borderColor');
         const bgSelect = document.getElementById('bgSelect');
-        const uploadGroup = document.getElementById('uploadGroup');
         const imageUpload = document.getElementById('imageUpload');
-        const inputTitle = document.getElementById('inputTitle');
-        const inputText = document.getElementById('inputText');
-
         const card = document.getElementById('card');
-        const cardTitle = document.getElementById('cardTitle');
-        const cardBody = document.getElementById('cardBody');
+        const downloadBtn = document.getElementById('downloadBtn');
 
-        // 1. 枠線の色変更
-        borderColorInput.addEventListener('input', (e) => {
-            card.style.borderColor = e.target.value;
+        // 文字入力の反映
+        const texts = ['text1', 'text2', 'text3'];
+        texts.forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                const targetId = id.replace('text', 'section');
+                document.getElementById(targetId).textContent = e.target.value;
+            });
         });
 
-        // 2. 背景の選択・切り替え
+        // フォントサイズの反映
+        document.querySelectorAll('.font-size-sel').forEach(sel => {
+            sel.addEventListener('change', (e) => {
+                const targetId = e.target.getAttribute('data-target');
+                document.getElementById(targetId).style.fontSize = e.target.value;
+            });
+        });
+
+        // 枠線の色
+        borderColorInput.addEventListener('input', (e) => {
+            card.style.borderColor = e.target.value;
+            document.querySelectorAll('.divider').forEach(div => {
+                div.style.backgroundColor = e.target.value;
+            });
+        });
+
+        // 背景切り替え
         bgSelect.addEventListener('change', (e) => {
             if (e.target.value === 'upload') {
-                uploadGroup.style.display = 'block';
-                card.style.backgroundImage = 'none';
+                imageUpload.style.display = 'block';
             } else {
-                uploadGroup.style.display = 'none';
-                card.style.backgroundImage = `url('${e.target.value}')`;
+                imageUpload.style.display = 'none';
+                card.style.backgroundImage = e.target.value ? `url('${e.target.value}')` : 'none';
             }
         });
 
-        // 3. 画像のアップロード処理
+        // アップロード画像反映
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(event) {
-                    card.style.backgroundImage = `url('${event.target.result}')`;
+                reader.onload = (ev) => {
+                    card.style.backgroundImage = `url('${ev.target.result}')`;
                 };
                 reader.readAsDataURL(file);
             }
         });
 
-        // 4. 文字のリアルタイム反映
-        inputTitle.addEventListener('input', (e) => {
-            cardTitle.textContent = e.target.value;
-        });
+        // 【重要】画像として保存する機能
+        downloadBtn.addEventListener('click', () => {
+            // 保存前にボタンを少し無効化（連打防止）
+            downloadBtn.innerText = "作成中...";
+            downloadBtn.disabled = true;
 
-        inputText.addEventListener('input', (e) => {
-            cardBody.textContent = e.target.value;
+            html2canvas(card, {
+                useCORS: true, // ネット上の画像も許可
+                scale: 2       // 画質を2倍にする
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'my-card.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                downloadBtn.innerText = "カードを画像として保存";
+                downloadBtn.disabled = false;
+            });
         });
     </script>
 </body>
