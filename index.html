@@ -405,8 +405,31 @@
             });
         }
 
-        document.getElementById('btn-hd').addEventListener('click', (e) => saveCard(2, 'card-hd.png'));
-        document.getElementById('btn-lite').addEventListener('click', (e) => saveCard(0.8, 'card-lite.jpg'));
+// 【修正版】保存設定
+        function saveCard(scaleValue, filename) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "作成中...";
+            btn.disabled = true;
+
+            html2canvas(card, { 
+                useCORS: true, 
+                scale: scaleValue,
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = filename;
+                // どちらも画質が劣化しないPNG形式のまま保存します
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                btn.innerText = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        // ボタンの動作をPNG保存に変更
+        document.getElementById('btn-hd').addEventListener('click', (e) => saveCard(1, 'card-standard.png')); // 2倍から1倍にして軽量化
+        document.getElementById('btn-lite').addEventListener('click', (e) => saveCard(0.8, 'card-lite.png')); // PNGのまま縮小して軽量化
     </script>
 </body>
 </html>
