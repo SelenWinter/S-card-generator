@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>高機能カードジェネレーター</title>
+    <title>TRPG特化カードジェネレーター</title>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body {
@@ -25,7 +25,6 @@
             width: 100%;
         }
 
-        /* 操作パネル（全体をコンパクトに調整） */
         .control-panel {
             background: white;
             padding: 15px;
@@ -37,7 +36,6 @@
             overflow-y: auto;
         }
 
-        /* 各区画の設定エリアをコンパクトにするための横並びスタイル */
         .control-group {
             margin-bottom: 12px;
             padding: 10px;
@@ -51,11 +49,10 @@
             font-size: 13px;
             color: #333;
             margin-bottom: 8px;
-            border-left: 3px solid #007bff;
+            border-left: 3px solid #e0a800;
             padding-left: 6px;
         }
 
-        /* 細かい設定を1行にまとめるコンテナ */
         .inline-controls {
             display: flex;
             gap: 8px;
@@ -73,7 +70,6 @@
             gap: 3px;
         }
 
-        /* 入力部品のコンパクト化 */
         input[type="text"], input[type="number"], select, textarea {
             width: 100%;
             padding: 6px;
@@ -83,29 +79,34 @@
             font-size: 13px;
         }
 
-        /* 横並び用の小さい入力欄 */
         input.small-input { width: 55px; padding: 4px; text-align: center; }
         select.small-select { width: 75px; padding: 4px; }
         input.color-input { width: 35px; height: 26px; padding: 0; border: none; cursor: pointer; }
+        input[type="range"] { flex: 1; height: 4px; }
 
         textarea { height: 65px; resize: vertical; margin-top: 5px; }
 
-        /* 保存ボタン */
+        /* 保存ボタンエリア */
+        .download-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
         .download-btn {
-            width: 100%;
+            flex: 1;
             padding: 12px;
-            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 5px;
         }
-        .download-btn:hover { background-color: #218838; }
+        #btn-hd { background-color: #6c757d; } /* 標準 */
+        #btn-lite { background-color: #28a745; } /* ココフォリア用軽量 */
+        #btn-hd:hover { background-color: #5a6268; }
+        #btn-lite:hover { background-color: #218838; }
 
-        /* カードプレビュー */
         .preview-area {
             flex: 1;
             display: flex;
@@ -118,19 +119,38 @@
         #card {
             width: 350px;
             height: 490px;
-            border: 12px solid #333; /* 初期値 */
+            border: 12px solid #333;
             box-sizing: border-box;
             position: relative;
             background-color: #fff;
-            background-size: cover;
-            background-position: center;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             padding: 0;
+            justify-content: flex-start; /* 初期値：上詰め */
         }
 
-        /* 区画スタイル */
+        /* 背景画像レイヤー（透明度スライダー用） */
+        .card-bg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 1; /* 初期値 */
+            z-index: 1;
+        }
+
+        /* 文字レイヤーコンテナ */
+        .card-content-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* 各区画スタイル */
         .section {
             padding: 0 12px;
             width: 100%;
@@ -138,11 +158,10 @@
             white-space: pre-wrap;
             word-wrap: break-word;
             text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff;
-            
-            /* 初期状態の設定 */
             font-size: 18px;
             color: #000000;
             text-align: left;
+            transition: font-size 0.1s; /* 自動縮小を滑らかに */
         }
 
         .divider {
@@ -158,21 +177,36 @@
 </head>
 <body>
 
-    <h2 style="margin: 0 0 15px 0; color: #333; font-size: 22px;">高機能カードジェネレーター</h2>
+    <h2 style="margin: 0 0 15px 0; color: #333; font-size: 22px;">TRPG特化カードジェネレーター</h2>
 
     <div class="container">
         <div class="control-panel">
             
             <div class="control-group">
-                <div class="group-title">全体・枠線設定</div>
+                <div class="group-title">全体設定（配置・軽量化）</div>
                 <div class="inline-controls">
                     <label>枠色:<input type="color" id="borderColor" class="color-input" value="#333333"></label>
                     <label>枠太さ:<input type="number" id="borderWidth" class="small-input" value="12" min="0">px</label>
-                    <select id="bgSelect" style="flex: 1; min-width: 120px;">
+                    <label>縦配置:
+                        <select id="valignSelect" class="small-select" style="width: 90px;">
+                            <option value="flex-start" selected>上詰め</option>
+                            <option value="space-between">均等配置</option>
+                        </select>
+                    </label>
+                </div>
+                <div class="inline-controls" style="margin-top: 10px;">
+                    <select id="bgSelect" style="flex: 1;">
                         <option value="">背景なし（白）</option>
-                        <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500">（サンプル）グラデーション</option>
-                        <option value="upload">画像をアップロードする</option>
+                        <option value="bg01.png">サンプル画像01</option>
+                        <option value="bg02.png">サンプル画像02</option>
+                        <option value="bg03.png">サンプル画像03</option>
+                        <option value="bg04.png">サンプル画像04</option>
+                        <option value="bg05.png">サンプル画像05</option>
+                        <option value="upload">PCから画像をアップロード</option>
                     </select>
+                    <label style="flex: 1; min-width: 120px;">背景の濃さ:
+                        <input type="range" id="bgOpacity" min="0" max="100" value="100">
+                    </label>
                 </div>
                 <input type="file" id="imageUpload" accept="image/*" style="display:none; margin-top:5px;">
             </div>
@@ -180,7 +214,7 @@
             <div class="control-group">
                 <div class="group-title">【区画１】最上部</div>
                 <div class="inline-controls">
-                    <label>サイズ:<input type="number" class="size-input small-input" data-target="section1" value="22">px</label>
+                    <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
                     <label>色:<input type="color" class="color-picker color-input" data-target="section1" value="#000000"></label>
                     <label>配置:
                         <select class="align-select small-select" data-target="section1">
@@ -196,7 +230,7 @@
             <div class="control-group">
                 <div class="group-title">【区画２】中央</div>
                 <div class="inline-controls">
-                    <label>サイズ:<input type="number" class="size-input small-input" data-target="section2" value="16">px</label>
+                    <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
                     <label>色:<input type="color" class="color-picker color-input" data-target="section2" value="#000000"></label>
                     <label>配置:
                         <select class="align-select small-select" data-target="section2">
@@ -206,13 +240,13 @@
                         </select>
                     </label>
                 </div>
-                <textarea id="text2" placeholder="文字列２">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</textarea>
+                <textarea id="text2" placeholder="文字列２">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</textarea>
             </div>
 
             <div class="control-group">
                 <div class="group-title">【区画３】最下部</div>
                 <div class="inline-controls">
-                    <label>サイズ:<input type="number" class="size-input small-input" data-target="section3" value="14">px</label>
+                    <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
                     <label>色:<input type="color" class="color-picker color-input" data-target="section3" value="#000000"></label>
                     <label>配置:
                         <select class="align-select small-select" data-target="section3">
@@ -225,69 +259,109 @@
                 <textarea id="text3" placeholder="文字列３">フレーバーテキストや注釈など</textarea>
             </div>
 
-            <button class="download-btn" id="downloadBtn">カードを画像として保存</button>
+            <div class="download-container">
+                <button class="download-btn" id="btn-hd">標準保存</button>
+                <button class="download-btn" id="btn-lite">ココフォリア用 (軽量保存)</button>
+            </div>
         </div>
 
         <div class="preview-area">
             <div id="card">
-                <div id="section1" class="section" style="font-size: 22px;">カードのタイトルなど</div>
-                <div class="divider"></div>
-                <div id="section2" class="section" style="font-size: 16px;">メインの説明文など。ここに入力した量に合わせて下の線が自動でズレていきます。</div>
-                <div class="divider"></div>
-                <div id="section3" class="section" style="font-size: 14px;">フレーバーテキストや注釈など</div>
+                <div class="card-bg-layer" id="cardBg"></div>
+                <div class="card-content-container" id="cardContent">
+                    <div id="section1" class="section" style="font-size: 22px;">カードのタイトルなど</div>
+                    <div class="divider"></div>
+                    <div id="section2" class="section" style="font-size: 16px;">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</div>
+                    <div class="divider"></div>
+                    <div id="section3" class="section" style="font-size: 14px;">フレーバーテキストや注釈など</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         const card = document.getElementById('card');
+        const cardBg = document.getElementById('cardBg');
+        const cardContent = document.getElementById('cardContent');
 
-        // 文字入力のリアルタイム反映
+        // 自動文字縮小システム
+        function autoShrink() {
+            const maxHeight = card.clientHeight - (parseInt(card.style.borderWidth) * 2 || 24);
+            let currentHeight = cardContent.scrollHeight;
+            
+            // 設定された基本サイズを取得
+            let s1 = parseInt(document.getElementById('size1').value);
+            let s2 = parseInt(document.getElementById('size2').value);
+            let s3 = parseInt(document.getElementById('size3').value);
+
+            // はみ出している間、全体の文字サイズを1pxずつ小さくする（最小6pxまで）
+            while (currentHeight > maxHeight && (s1 > 8 || s2 > 8 || s3 > 8)) {
+                if(s1 > 8) s1--;
+                if(s2 > 8) s2--;
+                if(s3 > 8) s3--;
+                
+                document.getElementById('section1').style.fontSize = s1 + 'px';
+                document.getElementById('section2').style.fontSize = s2 + 'px';
+                document.getElementById('section3').style.fontSize = s3 + 'px';
+                
+                currentHeight = cardContent.scrollHeight;
+            }
+        }
+
+        // 入力反映と同時に縮小チェック
         ['text1', 'text2', 'text3'].forEach(id => {
             document.getElementById(id).addEventListener('input', (e) => {
                 const targetId = id.replace('text', 'section');
                 document.getElementById(targetId).textContent = e.target.value;
+                resetSizes(); // 一度サイズを戻してから再計算
+                autoShrink();
             });
         });
 
-        // 文字サイズ入力（テキストボックス・数値）の反映
+        function resetSizes() {
+            document.getElementById('section1').style.fontSize = document.getElementById('size1').value + 'px';
+            document.getElementById('section2').style.fontSize = document.getElementById('size2').value + 'px';
+            document.getElementById('section3').style.fontSize = document.getElementById('size3').value + 'px';
+        }
+
         document.querySelectorAll('.size-input').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                document.getElementById(targetId).style.fontSize = e.target.value + 'px';
-            });
+            input.addEventListener('input', () => { resetSizes(); autoShrink(); });
         });
 
-        // 文字色選択の反映
+        // 縦方向の配置切り替え（上詰め / 均等）
+        document.getElementById('valignSelect').addEventListener('change', (e) => {
+            cardContent.style.justifyContent = e.target.value;
+        });
+
+        // 背景不透明度（薄さ）の変更
+        document.getElementById('bgOpacity').addEventListener('input', (e) => {
+            cardBg.style.opacity = e.target.value / 100;
+        });
+
+        // 文字色・配置・枠線
         document.querySelectorAll('.color-picker').forEach(picker => {
             picker.addEventListener('input', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                document.getElementById(targetId).style.color = e.target.value;
+                document.getElementById(e.target.getAttribute('data-target')).style.color = e.target.value;
             });
         });
 
-        // 文字配置（左寄せ・中央・右寄せ）の反映
         document.querySelectorAll('.align-select').forEach(select => {
             select.addEventListener('change', (e) => {
-                const targetId = e.target.getAttribute('data-target');
-                document.getElementById(targetId).style.textAlign = e.target.value;
+                document.getElementById(e.target.getAttribute('data-target')).style.textAlign = e.target.value;
             });
         });
 
-        // 枠線の色と区切り線の色連動
         document.getElementById('borderColor').addEventListener('input', (e) => {
             card.style.borderColor = e.target.value;
-            document.querySelectorAll('.divider').forEach(div => {
-                div.style.backgroundColor = e.target.value;
-            });
+            document.querySelectorAll('.divider').forEach(div => { div.style.backgroundColor = e.target.value; });
         });
 
-        // 枠線の太さ（数値入力）の反映
         document.getElementById('borderWidth').addEventListener('input', (e) => {
             card.style.borderWidth = e.target.value + 'px';
+            autoShrink();
         });
 
-        // 背景切り替え・アップロード
+        // 背景画像切り替え（同じGitHub上の画像を参照）
         const bgSelect = document.getElementById('bgSelect');
         const imageUpload = document.getElementById('imageUpload');
         bgSelect.addEventListener('change', (e) => {
@@ -295,7 +369,8 @@
                 imageUpload.style.display = 'block';
             } else {
                 imageUpload.style.display = 'none';
-                card.style.backgroundImage = e.target.value ? `url('${e.target.value}')` : 'none';
+                // 空なら背景なし、値があればGitHubの同階層の画像ファイルを指定
+                cardBg.style.backgroundImage = e.target.value ? `url('${e.target.value}')` : 'none';
             }
         });
 
@@ -303,26 +378,35 @@
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => { card.style.backgroundImage = `url('${ev.target.result}')`; };
+                reader.onload = (ev) => { cardBg.style.backgroundImage = `url('${ev.target.result}')`; };
                 reader.readAsDataURL(file);
             }
         });
 
-        // 画像保存機能
-        const downloadBtn = document.getElementById('downloadBtn');
-        downloadBtn.addEventListener('click', () => {
-            downloadBtn.innerText = "作成中...";
-            downloadBtn.disabled = true;
+        // 保存システム（画質選択）
+        function saveCard(scaleValue, filename) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "圧縮中...";
+            btn.disabled = true;
 
-            html2canvas(card, { useCORS: true, scale: 2 }).then(canvas => {
+            html2canvas(card, { useCORS: true, scale: scaleValue }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'my-card.png';
-                link.href = canvas.toDataURL('image/png');
+                link.download = filename;
+                // ココフォリア用は少し圧縮率を高めるためにjpeg、標準は透過png
+                if(scaleValue < 1.5) {
+                    link.href = canvas.toDataURL('image/jpeg', 0.7); // 画質70%のJPEGで激変レベルの軽量化
+                } else {
+                    link.href = canvas.toDataURL('image/png');
+                }
                 link.click();
-                downloadBtn.innerText = "カードを画像として保存";
-                downloadBtn.disabled = false;
+                btn.innerText = originalText;
+                btn.disabled = false;
             });
-        });
+        }
+
+        document.getElementById('btn-hd').addEventListener('click', (e) => saveCard(2, 'card-hd.png'));
+        document.getElementById('btn-lite').addEventListener('click', (e) => saveCard(0.8, 'card-lite.jpg'));
     </script>
 </body>
 </html>
