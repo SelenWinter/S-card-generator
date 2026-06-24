@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カスタムカードジェネレーター</title>
+    <style>
+        /* 画面全体のデザイン */
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 { color: #333; margin-bottom: 20px; }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        /* 操作パネルの設定 */
+        .control-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        textarea { height: 120px; resize: vertical; }
+
+        /* カードのプレビュー領域（ポーカーサイズ比率 63mm × 88mm に近い縦横比） */
+        .preview-area {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-width: 300px;
+        }
+
+        .card {
+            width: 350px;
+            height: 490px;
+            border: 10px solid #333;
+            border-radius: 15px;
+            box-sizing: border-box;
+            position: relative;
+            background-color: #fff;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        /* カード内のテキスト領域（最上部から最下部まで埋められる設定） */
+        .card-content {
+            padding: 15px;
+            height: 100%;
+            box-sizing: border-box;
+            color: #000;
+            text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white; /* 文字を読みやすくするフチ取り */
+            white-space: pre-wrap; /* 改行を反映 */
+            word-wrap: break-word;
+            overflow-y: auto; /* 文字が溢れた場合はカード内でスクロール可能に */
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .card-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid rgba(0,0,0,0.2);
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>カードジェネレーター</h1>
+
+    <div class="container">
+        <div class="control-panel">
+            <div class="control-group">
+                <label for="borderColor">枠線の色</label>
+                <input type="color" id="borderColor" value="#333333">
+            </div>
+
+            <div class="control-group">
+                <label for="bgSelect">背景画像の選択</label>
+                <select id="bgSelect">
+                    <option value="">（サンプル1）シンプルな白</option>
+                    <option value="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=500">（サンプル2）グラデーション</option>
+                    <option value="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=500">（サンプル3）植物・木目調</option>
+                    <option value="upload">自分の画像をアップロードする</option>
+                </select>
+            </div>
+
+            <div class="control-group" id="uploadGroup" style="display: none;">
+                <label for="imageUpload">背景画像を添付</label>
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+
+            <div class="control-group">
+                <label for="inputTitle">カードタイトル</label>
+                <input type="text" id="inputTitle" value="ここにタイトル">
+            </div>
+
+            <div class="control-group">
+                <label for="inputText">本文（画面最下部まで書き込めます）</label>
+                <textarea id="inputText">ここに説明文を入力します。改行をすればそのままカードに反映されます。文字をたくさん書くと、上から下までギッシリ埋めることができます。</textarea>
+            </div>
+        </div>
+
+        <div class="preview-area">
+            <div class="card" id="card">
+                <div class="card-content">
+                    <div class="card-title" id="cardTitle">ここにタイトル</div>
+                    <div id="cardBody">ここに説明文を入力します。</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 画面の要素をプログラムに覚えさせる
+        const borderColorInput = document.getElementById('borderColor');
+        const bgSelect = document.getElementById('bgSelect');
+        const uploadGroup = document.getElementById('uploadGroup');
+        const imageUpload = document.getElementById('imageUpload');
+        const inputTitle = document.getElementById('inputTitle');
+        const inputText = document.getElementById('inputText');
+
+        const card = document.getElementById('card');
+        const cardTitle = document.getElementById('cardTitle');
+        const cardBody = document.getElementById('cardBody');
+
+        // 1. 枠線の色変更
+        borderColorInput.addEventListener('input', (e) => {
+            card.style.borderColor = e.target.value;
+        });
+
+        // 2. 背景の選択・切り替え
+        bgSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'upload') {
+                uploadGroup.style.display = 'block';
+                card.style.backgroundImage = 'none';
+            } else {
+                uploadGroup.style.display = 'none';
+                card.style.backgroundImage = `url('${e.target.value}')`;
+            }
+        });
+
+        // 3. 画像のアップロード処理
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    card.style.backgroundImage = `url('${event.target.result}')`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 4. 文字のリアルタイム反映
+        inputTitle.addEventListener('input', (e) => {
+            cardTitle.textContent = e.target.value;
+        });
+
+        inputText.addEventListener('input', (e) => {
+            cardBody.textContent = e.target.value;
+        });
+    </script>
+</body>
+</html>
