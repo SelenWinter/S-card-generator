@@ -25,7 +25,6 @@
             width: 100%;
         }
 
-        /* 【大幅スリム化】スクロールバーを消し、コンパクトに */
         .control-panel {
             background: white;
             padding: 12px;
@@ -263,6 +262,7 @@
                 <input type="file" id="imageUpload" accept="image/*" style="display:none; margin-top:5px;">
 
                 <div class="group-title" style="margin-top: 12px;">文字設定（各区画）</div>
+                <!-- 区画1 -->
                 <div class="inline-controls">
                     <span style="font-size:11px; font-weight:bold; color:#555;">【上】</span>
                     <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
@@ -275,6 +275,7 @@
                 </div>
                 <textarea id="text1" placeholder="最上部テキスト">カードのタイトルなど</textarea>
 
+                <!-- 区画2 -->
                 <div class="inline-controls" style="margin-top: 6px;">
                     <span style="font-size:11px; font-weight:bold; color:#555;">【中】</span>
                     <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
@@ -287,6 +288,7 @@
                 </div>
                 <textarea id="text2" placeholder="中央テキスト">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</textarea>
 
+                <!-- 区画3 -->
                 <div class="inline-controls" style="margin-top: 6px;">
                     <span style="font-size:11px; font-weight:bold; color:#555;">【下】</span>
                     <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
@@ -299,6 +301,7 @@
                 </div>
                 <textarea id="text3" placeholder="最下部テキスト">フレーバーテキストや注釈など</textarea>
 
+                <!-- カード裏面設定 -->
                 <div class="group-title" style="margin-top: 12px;">カード裏面設定</div>
                 <div class="inline-controls">
                     <select id="backSelect" style="flex: 1;">
@@ -311,14 +314,16 @@
                     </select>
                 </div>
                 <input type="file" id="backImageUpload" accept="image/*" style="display:none; margin-top:5px;">
-                <div class="download-container">
-                    <button class="download-btn" id="btn-back">裏面画像を保存</button>
-                </div>
             </div>
 
-            <div class="download-container" style="margin-top: 10px; background:#e9ecef; padding:8px; border-radius:8px;">
-                <button class="download-btn" id="btn-hd">標準保存 (表面)</button>
-                <button class="download-btn" id="btn-lite">軽量保存 (表面)</button>
+            <!-- 【修正】保存ボタンエリアの配置順とテキスト変更 -->
+            <div class="download-container" style="margin-top: 10px; background:#e9ecef; padding:8px; border-radius:8px; flex-direction:column; gap:6px;">
+                <div style="display:flex; gap:8px; width:100%;">
+                    <button class="download-btn" id="btn-hd">標準保存</button>
+                    <button class="download-btn" id="btn-lite">軽量保存</button>
+                </div>
+                <div style="width:100%; border-top:1px dashed #ccc; margin:2px 0;"></div>
+                <button class="download-btn" id="btn-back" style="width:100%;">裏面画像を保存</button>
             </div>
         </div>
 
@@ -359,7 +364,6 @@
         const cardBackPreview = document.getElementById('cardBackPreview');
         const cardBackImg = document.getElementById('cardBackImg');
 
-        // 枠線・画像縮小ロジック
         function updateBorder() {
             const hex = document.getElementById('borderColor').value;
             const opacity = document.getElementById('borderOpacity').value / 100;
@@ -387,7 +391,6 @@
             }
         }
 
-        // 自動文字縮小
         function autoShrink() {
             resetSizes();
             const borderWidth = parseInt(document.getElementById('borderWidth').value) || 0;
@@ -441,12 +444,12 @@
             select.addEventListener('change', (e) => { document.getElementById(e.target.getAttribute('data-target')).style.textAlign = e.target.value; });
         });
 
-        // 表面背景切り替え処理
         const bgSelect = document.getElementById('bgSelect');
         const imageUpload = document.getElementById('imageUpload');
         const solidColorLabel = document.getElementById('solidColorLabel');
         const solidColor = document.getElementById('solidColor');
 
+        // 【修正】単色背景（solid）の際にsrc属性を空にし、不要なエラーアイコンを完全非表示にする制御
         function handleBgChange() {
             const val = bgSelect.value;
             imageUpload.style.display = 'none';
@@ -454,17 +457,19 @@
             cardBg.style.backgroundColor = 'transparent';
 
             if (val === 'upload') {
+                cardBg.removeAttribute('src');
+                cardBg.style.display = 'none';
                 imageUpload.style.display = 'block';
             } else if (val === 'solid') {
                 solidColorLabel.style.display = 'flex';
-                cardBg.src = '';
+                cardBg.removeAttribute('src'); // srcを完全除去してアイコン化を防ぐ
                 cardBg.style.display = 'block';
                 cardBg.style.backgroundColor = solidColor.value;
             } else if (val) {
                 cardBg.src = val + '?t=' + new Date().getTime();
                 cardBg.style.display = 'block';
             } else {
-                cardBg.src = '';
+                cardBg.removeAttribute('src');
                 cardBg.style.display = 'none';
             }
         }
@@ -480,7 +485,6 @@
             }
         });
 
-        // 裏面背景切り替え処理
         const backSelect = document.getElementById('backSelect');
         const backImageUpload = document.getElementById('backImageUpload');
 
@@ -502,7 +506,6 @@
             }
         });
 
-        // 保存システム
         function saveCard(targetElement, scaleValue, filename) {
             const btn = event.target;
             const originalText = btn.innerText;
@@ -519,7 +522,6 @@
         document.getElementById('btn-lite').addEventListener('click', (e) => saveCard(card, 0.8, 'card-lite.png'));
         document.getElementById('btn-back').addEventListener('click', (e) => saveCard(cardBackPreview, 1, 'card-back.png'));
 
-        // 初期化実行
         window.addEventListener('DOMContentLoaded', () => {
             updateBorder();
             autoShrink();
