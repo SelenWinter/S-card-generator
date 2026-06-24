@@ -284,11 +284,14 @@
         const cardBg = document.getElementById('cardBg');
         const cardContent = document.getElementById('cardContent');
 
-        // 自動文字縮小システム
+// 【修正版】自動文字縮小システム
         function autoShrink() {
-            const maxHeight = card.clientHeight - (parseInt(card.style.borderWidth) * 2 || 24);
-            let currentHeight = cardContent.scrollHeight;
+            // 枠線の太さを取得。0pxや設定されていない場合は 0 にする
+            const borderWidth = parseInt(card.style.borderWidth) || 0;
+            // 枠線の太さを考慮して、文字が入る最大高さを正しく計算
+            const maxHeight = card.clientHeight - (borderWidth * 2);
             
+            let currentHeight = cardContent.scrollHeight;            
             // 設定された基本サイズを取得
             let s1 = parseInt(document.getElementById('size1').value);
             let s2 = parseInt(document.getElementById('size2').value);
