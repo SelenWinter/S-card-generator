@@ -127,23 +127,26 @@
             display: flex;
             flex-direction: column;
             padding: 0;
-            justify-content: flex-start; /* 初期値：上詰め */
+            justify-content: flex-start;
         }
 
-        /* 背景画像レイヤー（透明度スライダー用） */
-        .card-bg-layer {
+        /* 【改良】背景画像レイヤーを通常のimgタグで制御 */
+        #cardBg {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-size: cover;
-            background-position: center;
-            opacity: 1; /* 初期値 */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none; /* 初期状態は非表示 */
+            opacity: 1;
             z-index: 1;
         }
 
         /* 文字レイヤーコンテナ */
         .card-content-container {
             position: relative;
-            z-index: 2;
+            z-index: 2; /* 背景画像より必ず手前に来るように */
             display: flex;
             flex-direction: column;
             height: 100%;
@@ -161,7 +164,7 @@
             font-size: 18px;
             color: #000000;
             text-align: left;
-            transition: font-size 0.1s; /* 自動縮小を滑らかに */
+            transition: font-size 0.1s;
         }
 
         .divider {
@@ -177,7 +180,7 @@
 </head>
 <body>
 
-    <h2 style="margin: 0 0 15px 0; color: #333; font-size: 22px;">カードジェネレーター</h2>
+    <h2 style="margin: 0 0 15px 0; color: #333; font-size: 22px;">TRPG特化カードジェネレーター</h2>
 
     <div class="container">
         <div class="control-panel">
@@ -267,7 +270,7 @@
 
         <div class="preview-area">
             <div id="card">
-                <div class="card-bg-layer" id="cardBg"></div>
+                <img id="cardBg" src="" alt="背景" crossorigin="anonymous">
                 <div class="card-content-container" id="cardContent">
                     <div id="section1" class="section" style="font-size: 22px;">カードのタイトルなど</div>
                     <div class="divider"></div>
@@ -286,24 +289,18 @@
 
         // 自動文字縮小システム
         function autoShrink() {
-            // 1. 各セクションの文字サイズを、ユーザーの設定値に「完全にリセット」
             resetSizes();
 
-            // 枠線の太さを取得（0や空欄なら0）
             const borderWidth = parseInt(document.getElementById('borderWidth').value);
             const actualBorder = isNaN(borderWidth) ? 0 : borderWidth;
-
-            // 固定値490pxから枠線の影響（上下分）を引いて、文字が入る絶対的な「最大高さ」を計算
             const maxHeight = 490 - (actualBorder * 2);
             
             let currentHeight = cardContent.scrollHeight;
             
-            // 入力欄の基本サイズを取得
             let s1 = parseInt(document.getElementById('size1').value) || 22;
             let s2 = parseInt(document.getElementById('size2').value) || 16;
             let s3 = parseInt(document.getElementById('size3').value) || 14;
 
-            // 2. 文字がはみ出している間だけ、全体の文字サイズを1pxずつ小さくする（最小8pxまで）
             while (currentHeight > maxHeight && (s1 > 8 || s2 > 8 || s3 > 8)) {
                 if(s1 > 8) s1--;
                 if(s2 > 8) s2--;
@@ -313,18 +310,16 @@
                 document.getElementById('section2').style.fontSize = s2 + 'px';
                 document.getElementById('section3').style.fontSize = s3 + 'px';
                 
-                currentHeight = cardContent.scrollHeight; // 再計測
+                currentHeight = cardContent.scrollHeight;
             }
         }
 
-        // 文字サイズをユーザーの設定値に戻す関数
         function resetSizes() {
             document.getElementById('section1').style.fontSize = (document.getElementById('size1').value || 22) + 'px';
             document.getElementById('section2').style.fontSize = (document.getElementById('size2').value || 16) + 'px';
             document.getElementById('section3').style.fontSize = (document.getElementById('size3').value || 14) + 'px';
         }
 
-        // 文字入力時の連動
         ['text1', 'text2', 'text3'].forEach(id => {
             document.getElementById(id).addEventListener('input', (e) => {
                 const targetId = id.replace('text', 'section');
@@ -333,36 +328,26 @@
             });
         });
 
-        // 文字サイズ（数値入力）が変更された時の連動
         document.querySelectorAll('.size-input').forEach(input => {
-            input.addEventListener('input', () => { 
-                autoShrink(); 
-            });
+            input.addEventListener('input', () => { autoShrink(); });
         });
 
-        // 【修正】枠線の太さが変更された時の連動
         document.getElementById('borderWidth').addEventListener('input', (e) => {
             const val = parseInt(e.target.value);
             const actualBorder = isNaN(val) ? 0 : val;
-            
-            // 実際の見た目の枠線を太くする処理
             card.style.borderWidth = actualBorder + 'px';
-            // その枠線に合わせて文字サイズを再計算
             autoShrink(); 
         });
 
-        // 縦方向の配置切り替え（上詰め / 均等）
         document.getElementById('valignSelect').addEventListener('change', (e) => {
             cardContent.style.justifyContent = e.target.value;
             autoShrink();
         });
 
-        // 背景不透明度の変更
         document.getElementById('bgOpacity').addEventListener('input', (e) => {
             cardBg.style.opacity = e.target.value / 100;
         });
 
-        // 文字色・配置・枠線色
         document.querySelectorAll('.color-picker').forEach(picker => {
             picker.addEventListener('input', (e) => {
                 document.getElementById(e.target.getAttribute('data-target')).style.color = e.target.value;
@@ -380,15 +365,23 @@
             document.querySelectorAll('.divider').forEach(div => { div.style.backgroundColor = e.target.value; });
         });
 
-        // 背景画像切り替え
+        // 【改良】背景画像切り替え処理（imgのsrcを制御し、キャッシュバスターを付与）
         const bgSelect = document.getElementById('bgSelect');
         const imageUpload = document.getElementById('imageUpload');
+        
         bgSelect.addEventListener('change', (e) => {
             if (e.target.value === 'upload') {
                 imageUpload.style.display = 'block';
             } else {
                 imageUpload.style.display = 'none';
-                cardBg.style.backgroundImage = e.target.value ? `url('${e.target.value}')` : 'none';
+                if (e.target.value) {
+                    // ブラウザのキャッシュ対策とセキュリティ制限を回避するためクエリを付与
+                    cardBg.src = e.target.value + '?t=' + new Date().getTime();
+                    cardBg.style.display = 'block';
+                } else {
+                    cardBg.src = '';
+                    cardBg.style.display = 'none';
+                }
             }
         });
 
@@ -396,7 +389,10 @@
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => { cardBg.style.backgroundImage = `url('${ev.target.result}')`; };
+                reader.onload = (ev) => { 
+                    cardBg.src = ev.target.result; 
+                    cardBg.style.display = 'block';
+                };
                 reader.readAsDataURL(file);
             }
         });
