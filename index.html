@@ -85,7 +85,6 @@
 
         textarea { height: 40px; resize: vertical; margin-top: 2px; font-size: 11px; }
 
-        /* 【デザイン変更】保存ブロックのレイアウトと色の一体感 */
         .download-container {
             display: flex;
             gap: 8px;
@@ -103,24 +102,11 @@
             transition: background 0.2s;
         }
         
-        /* 表面用ボタン：シックなダーク系 */
         .btn-surface { background-color: #495057; }
         .btn-surface:hover { background-color: #343a40; }
         
-        /* 裏面用ボタン・コントロール：スマートなブルー系 */
         .btn-backend { background-color: #007bff; }
         .btn-backend:hover { background-color: #0056b3; }
-
-        .file-input-label {
-            font-size: 11px;
-            color: #495057;
-            background: #e9ecef;
-            padding: 3px 6px;
-            border-radius: 4px;
-            border: 1px solid #ced4da;
-            cursor: pointer;
-            display: inline-block;
-        }
 
         .preview-area {
             flex: 1;
@@ -387,7 +373,6 @@
         let uploadedBgSrc = null;
         let uploadedBackSrc = null;
 
-        // 【修正】縮小ロジックを表面・裏面の両方に完全連動
         function updateBorder() {
             const hex = document.getElementById('borderColor').value;
             const opacity = document.getElementById('borderOpacity').value / 100;
@@ -405,7 +390,6 @@
 
             const shrinkMode = document.getElementById('borderModeToggle').checked;
             
-            // 表面縮小
             if (shrinkMode) {
                 cardBg.style.top = '0px'; cardBg.style.left = '0px';
                 cardBg.style.width = `calc(100% + ${width * 2}px)`; cardBg.style.height = `calc(100% + ${width * 2}px)`;
@@ -416,7 +400,6 @@
                 cardBg.style.transform = 'none';
             }
 
-            // 裏面縮小（完全連動）
             if (shrinkMode) {
                 cardBackImg.style.top = '0px'; cardBackImg.style.left = '0px';
                 cardBackImg.style.width = `calc(100% + ${width * 2}px)`; cardBackImg.style.height = `calc(100% + ${width * 2}px)`;
@@ -486,29 +469,29 @@
         const solidColorLabel = document.getElementById('solidColorLabel');
         const solidColor = document.getElementById('solidColor');
 
-        // 【修正】表面描画ロジック（アップロード優先 ＆ 単色時のエラーアイコン完全消去）
+        // 【大修正】単色（solid）時は画像タグを「完全に消し去る」ロジックへ移行
         function handleBgChange() {
             solidColorLabel.style.display = 'none';
-            cardBg.style.backgroundColor = 'transparent';
+            card.style.backgroundColor = '#ffffff'; // デフォルトリセット
 
             if (uploadedBgSrc) {
-                cardBg.setAttribute('src', uploadedBgSrc);
                 cardBg.style.display = 'block';
+                cardBg.setAttribute('src', uploadedBgSrc);
             } else {
                 const val = bgSelect.value;
                 if (val === 'solid') {
-                    solidColorLabel.style.display = 'flex';
-                    cardBg.removeAttribute('src'); // srcを除去してエラーアイコンを出さない
-                    cardBg.style.display = 'block';
-                    cardBg.style.backgroundColor = solidColor.value;
+                    // 単色設定のときは画像タグ自体を非表示(none)にして、親の枠（card）を染める
+                    cardBg.style.display = 'none';
+                    cardBg.removeAttribute('src'); 
+                    card.style.backgroundColor = solidColor.value;
                 } else {
-                    cardBg.src = val + '?t=' + new Date().getTime();
                     cardBg.style.display = 'block';
+                    cardBg.src = val + '?t=' + new Date().getTime();
                 }
             }
         }
         bgSelect.addEventListener('change', handleBgChange);
-        solidColor.addEventListener('input', () => { if(!uploadedBgSrc && bgSelect.value === 'solid') cardBg.style.backgroundColor = solidColor.value; });
+        solidColor.addEventListener('input', () => { if(!uploadedBgSrc && bgSelect.value === 'solid') card.style.backgroundColor = solidColor.value; });
 
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -526,29 +509,29 @@
         const backSolidColorLabel = document.getElementById('backSolidColorLabel');
         const backSolidColor = document.getElementById('backSolidColor');
 
-        // 【修正】裏面描画ロジック（アップロード優先 ➔ 単色背景 ➔ 各種画像、エラーアイコン完全消去）
+        // 【大修正】裏面の単色設定も同様に、画像タグを「完全に消し去る」
         function handleBackBgChange() {
             backSolidColorLabel.style.display = 'none';
-            cardBackImg.style.backgroundColor = 'transparent';
+            cardBackPreview.style.backgroundColor = '#ffffff'; // デフォルトリセット
 
             if (uploadedBackSrc) {
-                cardBackImg.setAttribute('src', uploadedBackSrc);
                 cardBackImg.style.display = 'block';
+                cardBackImg.setAttribute('src', uploadedBackSrc);
             } else {
                 const val = backSelect.value;
                 if (val === 'solid') {
-                    backSolidColorLabel.style.display = 'flex';
-                    cardBackImg.removeAttribute('src'); // srcを除去してエラーアイコンを出さない
-                    cardBackImg.style.display = 'block';
-                    cardBackImg.style.backgroundColor = backSolidColor.value;
+                    // 単色設定のときは画像タグ自体を非表示(none)にして、裏面の土台を染める
+                    cardBackImg.style.display = 'none';
+                    cardBackImg.removeAttribute('src');
+                    cardBackPreview.style.backgroundColor = backSolidColor.value;
                 } else {
-                    cardBackImg.src = val + '?t=' + new Date().getTime();
                     cardBackImg.style.display = 'block';
+                    cardBackImg.src = val + '?t=' + new Date().getTime();
                 }
             }
         }
         backSelect.addEventListener('change', handleBackBgChange);
-        backSolidColor.addEventListener('input', () => { if(!uploadedBackSrc && backSelect.value === 'solid') cardBackImg.style.backgroundColor = backSolidColor.value; });
+        backSolidColor.addEventListener('input', () => { if(!uploadedBackSrc && backSelect.value === 'solid') cardBackPreview.style.backgroundColor = backSolidColor.value; });
 
         backImageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -561,7 +544,6 @@
             }
         });
 
-        // 保存機能
         function saveCard(targetElement, scaleValue, filename) {
             const btn = event.target;
             const originalText = btn.innerText;
