@@ -322,6 +322,7 @@
                     <div class="inline-controls">
                         <span style="font-size:11px; font-weight:bold; color:#495057;">【上】</span>
                         <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
+                        <label>余白:<input type="number" class="padding-input small-input" data-target="section1" value="12">px</label>
                         <label>色:<input type="color" class="color-picker color-input" data-target="section1" value="#000000"></label>
                         <select class="align-select small-select" data-target="section1" style="width:65px; margin-left:auto;">
                             <option value="left" selected>左寄せ</option>
@@ -336,6 +337,7 @@
                     <div class="inline-controls">
                         <span style="font-size:11px; font-weight:bold; color:#495057;">【中】</span>
                         <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
+                        <label>余白:<input type="number" class="padding-input small-input" data-target="section2" value="12">px</label>
                         <label>色:<input type="color" class="color-picker color-input" data-target="section2" value="#000000"></label>
                         <select class="align-select small-select" data-target="section2" style="width:65px; margin-left:auto;">
                             <option value="left" selected>左寄せ</option>
@@ -350,6 +352,7 @@
                     <div class="inline-controls">
                         <span style="font-size:11px; font-weight:bold; color:#495057;">【下】</span>
                         <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
+                        <label>余白:<input type="number" class="padding-input small-input" data-target="section3" value="12">px</label>
                         <label>色:<input type="color" class="color-picker color-input" data-target="section3" value="#000000"></label>
                         <select class="align-select small-select" data-target="section3" style="width:65px; margin-left:auto;">
                             <option value="left" selected>左寄せ</option>
@@ -476,7 +479,6 @@
         function autoShrink() {
             resetSizes();
             const borderWidth = parseInt(document.getElementById('borderWidth').value) || 0;
-            // 高さの判定基準を525pxに修正
             const maxHeight = 525 - (borderWidth * 2);
             let currentHeight = cardContent.scrollHeight;
             let s1 = parseInt(document.getElementById('size1').value) || 22;
@@ -492,10 +494,23 @@
             }
         }
 
+        // 全区画の余白サイズを反映する関数
+        function applyPaddingAll() {
+            document.querySelectorAll('.padding-input').forEach(input => {
+                const targetId = input.getAttribute('data-target');
+                const targetEl = document.getElementById(targetId);
+                if (targetEl) {
+                    targetEl.style.paddingLeft = input.value + 'px';
+                    targetEl.style.paddingRight = input.value + 'px';
+                }
+            });
+        }
+
         function resetSizes() {
             document.getElementById('section1').style.fontSize = (document.getElementById('size1').value || 22) + 'px';
             document.getElementById('section2').style.fontSize = (document.getElementById('size2').value || 16) + 'px';
             document.getElementById('section3').style.fontSize = (document.getElementById('size3').value || 14) + 'px';
+            applyPaddingAll(); // リセット時に余白も再設定
         }
 
         ['text1', 'text2', 'text3'].forEach(id => {
@@ -508,6 +523,14 @@
 
         document.querySelectorAll('.size-input').forEach(input => {
             input.addEventListener('input', () => { autoShrink(); });
+        });
+
+        // 余白の数値が変更されたらプレビューに即時反映
+        document.querySelectorAll('.padding-input').forEach(input => {
+            input.addEventListener('input', () => {
+                applyPaddingAll();
+                autoShrink();
+            });
         });
 
         document.getElementById('borderWidth').addEventListener('input', () => { updateBorder(); autoShrink(); });
