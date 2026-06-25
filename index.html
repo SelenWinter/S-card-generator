@@ -6,7 +6,7 @@
     <title>S-Card-Generator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=M+PLUS+1p:wght@400;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Kiwi+Maru&family=Kosugi+Maru&family=M+PLUS+Rounded+1c:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Serif+JP:wght@500;700&family=Sawarabi+Gothic&family=Sawarabi+Mincho&family=Shippori+Mincho:wght@500;700&family=Yusei+Magic&family=Zen+Kaku+Graphic+New:wght@400;700&display=swap" rel="stylesheet">
     
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
@@ -30,43 +30,61 @@
         }
 
         .control-panel {
-            background: white;
-            padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
             flex: 1;
             min-width: 350px;
             max-width: 480px;
             box-sizing: border-box;
         }
 
+        /* 3つの大枠区切り（コントラストを高めた背景色） */
         .control-group {
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border: 1px solid #e9ecef;
+            padding: 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-sizing: border-box;
         }
+        
+        /* 区画1: 全体・背景設定 (ライトグレー) */
+        .group-global { background: #ffffff; border: 1px solid #dcdfe6; }
+        /* 区画2: 文字設定 (マイルドイエローベージュ) */
+        .group-text { background: #fdfdf0; border: 1px solid #e6dfb8; }
+        /* 区画3: 保存・裏面設定 (マイルドブルー) */
+        .group-save { background: #f0f7ff; border: 1px solid #b8daff; }
 
         .group-title {
             font-weight: bold;
             font-size: 13px;
             color: #333;
-            margin-bottom: 8px;
-            border-left: 3px solid #e0a800;
+            margin-bottom: 10px;
+            border-left: 4px solid #e0a800;
             padding-left: 6px;
         }
+        .group-save .group-title { border-left-color: #007bff; }
+
+        /* 各項目のインナーボックス（色差をつけて判別しやすく） */
+        .item-row {
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            box-sizing: border-box;
+        }
+        .bg-row-a { background: #f4f6f8; border: 1px solid #e4e7ed; }
+        .bg-row-b { background: #eaedf1; border: 1px solid #dcdfe6; }
+        .bg-row-text { background: #ffffff; border: 1px solid #eedda9; margin-bottom: 8px; }
 
         .inline-controls {
             display: flex;
             gap: 6px;
             align-items: center;
-            margin-bottom: 6px;
             flex-wrap: wrap;
         }
 
         .inline-controls label {
             font-size: 11px;
-            color: #666;
+            color: #444;
             margin: 0;
             display: flex;
             align-items: center;
@@ -87,12 +105,12 @@
         input.color-input { width: 30px; height: 22px; padding: 0; border: none; cursor: pointer; vertical-align: middle; }
         input[type="range"] { flex: 1; height: 4px; }
 
-        textarea { height: 40px; resize: vertical; margin-top: 2px; font-size: 11px; }
+        textarea { height: 38px; resize: vertical; margin-top: 4px; font-size: 11px; }
 
+        /* 保存エリアボタン */
         .download-container {
             display: flex;
             gap: 8px;
-            margin-top: 8px;
         }
         .download-btn {
             flex: 1;
@@ -155,7 +173,8 @@
         #cardBg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover;
+            /* アスペクト比維持の強制枠内収め */
+            object-fit: contain;
             opacity: 1;
             z-index: 1;
             box-sizing: border-box;
@@ -177,7 +196,6 @@
             box-sizing: border-box;
             white-space: pre-wrap;
             word-wrap: break-word;
-            /* 初期値：文字燐光オン */
             text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff;
             font-size: 18px;
             color: #000000;
@@ -185,10 +203,7 @@
             transition: font-size 0.1s;
         }
 
-        /* 文字燐光（アウトライン）がオフのときのスタイル用クラス */
-        .no-glow {
-            text-shadow: none !important;
-        }
+        .no-glow { text-shadow: none !important; }
 
         .divider {
             width: 90%;
@@ -216,7 +231,8 @@
         #cardBackImg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover;
+            /* アスペクト比維持の強制枠内収め */
+            object-fit: contain;
             z-index: 1;
             box-sizing: border-box;
         }
@@ -240,120 +256,141 @@
 
     <div class="container">
         <div class="control-panel">
-            <div class="control-group">
+            
+            <div class="control-group group-global">
                 <div class="group-title">カード全体・背景設定</div>
-                <div class="inline-controls">
+                
+                <div class="item-row bg-row-a inline-controls">
                     <label>枠色:<input type="color" id="borderColor" class="color-input" value="#333333"></label>
-                    <label>透明度:<input type="range" id="borderOpacity" min="0" max="100" value="100" style="width:50px; flex:none;"></label>
+                    <label>不透明度:<input type="range" id="borderOpacity" min="0" max="100" value="100" style="width:45px; flex:none;"></label>
                     <label>太さ:<input type="number" id="borderWidth" class="small-input" value="12" min="0">px</label>
                     <label>配置:
-                        <select id="valignSelect" class="small-select" style="width: 80px;">
+                        <select id="valignSelect" class="small-select" style="width: 70px;">
                             <option value="flex-start" selected>上詰め</option>
-                            <option value="space-between">均等配置</option>
+                            <option value="space-between">均等</option>
                         </select>
                     </label>
                 </div>
                 
-                <div class="inline-controls" style="background: #eef2f7; padding: 4px; border-radius: 4px; margin-bottom: 8px;">
+                <div class="item-row bg-row-b inline-controls">
                     <label style="flex: 1;">フォント:
                         <select id="fontSelect" style="width: auto; padding: 2px;">
-                            <option value="sans-serif" selected>標準ゴシック体</option>
-                            <option value="'Noto Serif JP', serif">美しい明朝体</option>
-                            <option value="'M PLUS 1p', sans-serif" style="font-weight:700;">力強い太ゴシック</option>
-                            <option value="'Kiwi Maru', serif">ポップな丸ゴシック</option>
+                            <option value="sans-serif" style="font-family: sans-serif;" selected>Noto Sans Japanese</option>
+                            <option value="'Noto Serif JP', serif" style="font-family: 'Noto Serif JP';">Noto Serif Japanese</option>
+                            <option value="'M PLUS Rounded 1c', sans-serif" style="font-family: 'M PLUS Rounded 1c';">M PLUS Rounded 1c</option>
+                            <option value="'Sawarabi Gothic', sans-serif" style="font-family: 'Sawarabi Gothic';">Sawarabi Gothic</option>
+                            <option value="'Sawarabi Mincho', serif" style="font-family: 'Sawarabi Mincho';">Sawarabi Mincho</option>
+                            <option value="'Kiwi Maru', serif" style="font-family: 'Kiwi Maru';">Kiwi Maru</option>
+                            <option value="'Kosugi Maru', sans-serif" style="font-family: 'Kosugi Maru';">Kosugi Maru</option>
+                            <option value="'Zen Kaku Gothic New', sans-serif" style="font-family: 'Zen Kaku Gothic New';">Zen Kaku Gothic New</option>
+                            <option value="'Dela Gothic One', sans-serif" style="font-family: 'Dela Gothic One';">Dela Gothic One</option>
+                            <option value="'Yusei Magic', sans-serif" style="font-family: 'Yusei Magic';">Yusei Magic</option>
+                            <option value="'Shippori Mincho', serif" style="font-family: 'Shippori Mincho';">Shippori Mincho</option>
                         </select>
                     </label>
-                    <label style="cursor:pointer; font-weight: bold;"><input type="checkbox" id="glowToggle" checked> 文字燐光</label>
-                </div>
-
-                <div class="inline-controls">
-                    <label style="cursor:pointer;"><input type="checkbox" id="borderModeToggle"> 枠線に合わせて背景画像を縮小（表裏連動）</label>
+                    <label style="cursor:pointer; font-weight: bold;"><input type="checkbox" id="glowToggle" checked>文字燐光</label>
                 </div>
                 
-                <div class="inline-controls" style="margin-top: 6px;">
-                    <select id="bgSelect" style="flex: 1;">
-                        <option value="bg01.png" selected>サンプル画像01（デフォルト）</option>
-                        <option value="bg02.png">サンプル画像02</option>
-                        <option value="bg03.png">サンプル画像03</option>
-                        <option value="bg04.png">サンプル画像04</option>
-                        <option value="bg05.png">サンプル画像05</option>
-                        <option value="solid">単色背景（カラー指定）</option>
-                    </select>
-                    <label id="solidColorLabel" style="display:none; gap:3px;">背景色:<input type="color" id="solidColor" class="color-input" value="#ffffff"></label>
-                    <label id="bgOpacityLabel" style="flex: 1; min-width: 100px;">濃さ:
-                        <input type="range" id="bgOpacity" min="0" max="100" value="100">
-                    </label>
+                <div class="item-row bg-row-a">
+                    <div class="inline-controls" style="margin-bottom: 4px;">
+                        <select id="bgSelect" style="flex: 1;">
+                            <option value="bg01.png" selected>サンプル01</option>
+                            <option value="bg02.png">サンプル02</option>
+                            <option value="bg03.png">サンプル03</option>
+                            <option value="bg04.png">サンプル04</option>
+                            <option value="bg05.png">サンプル05</option>
+                            <option value="solid">単色背景（カラー指定）</option>
+                        </select>
+                        <label id="solidColorLabel" style="display:none; gap:2px;">色:<input type="color" id="solidColor" class="color-input" value="#ffffff"></label>
+                        <label id="bgOpacityLabel" style="width: 80px; flex:none;">濃さ:<input type="range" id="bgOpacity" min="0" max="100" value="100"></label>
+                    </div>
+                    <div class="inline-controls">
+                        <span style="font-size: 11px; color:#555;">画像アップロード(優先):</span>
+                        <input type="file" id="imageUpload" accept="image/*" style="font-size:11px; max-width:180px;">
+                    </div>
+                    <div class="inline-controls" style="margin-top: 6px; border-top: 1px dashed #ccc; padding-top: 4px;">
+                        <label style="cursor:pointer; color:#0056b3;"><input type="checkbox" id="borderModeToggle"> 枠線に合わせて背景画像を縮小（表裏連動）</label>
+                    </div>
                 </div>
-                <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                    <span style="font-size: 11px; color:#666;">自作画像優先読込:</span>
-                    <input type="file" id="imageUpload" accept="image/*" style="font-size:11px; max-width:200px;">
-                </div>
-
-                <div class="group-title" style="margin-top: 12px;">文字設定（各区画）</div>
-                <div class="inline-controls">
-                    <span style="font-size:11px; font-weight:bold; color:#555;">【上】</span>
-                    <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
-                    <label>色:<input type="color" class="color-picker color-input" data-target="section1" value="#000000"></label>
-                    <select class="align-select small-select" data-target="section1" style="width:65px;">
-                        <option value="left" selected>左寄せ</option>
-                        <option value="center">中央</option>
-                        <option value="right">右寄せ</option>
-                    </select>
-                </div>
-                <textarea id="text1" placeholder="最上部テキスト">カードのタイトルなど</textarea>
-
-                <div class="inline-controls" style="margin-top: 6px;">
-                    <span style="font-size:11px; font-weight:bold; color:#555;">【中】</span>
-                    <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
-                    <label>色:<input type="color" class="color-picker color-input" data-target="section2" value="#000000"></label>
-                    <select class="align-select small-select" data-target="section2" style="width:65px;">
-                        <option value="left" selected>左寄せ</option>
-                        <option value="center">中央</option>
-                        <option value="right">右寄せ</option>
-                    </select>
-                </div>
-                <textarea id="text2" placeholder="中央テキスト">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</textarea>
-
-                <div class="inline-controls" style="margin-top: 6px;">
-                    <span style="font-size:11px; font-weight:bold; color:#555;">【下】</span>
-                    <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
-                    <label>色:<input type="color" class="color-picker color-input" data-target="section3" value="#000000"></label>
-                    <select class="align-select small-select" data-target="section3" style="width:65px;">
-                        <option value="left" selected>左寄せ</option>
-                        <option value="center">中央</option>
-                        <option value="right">右寄せ</option>
-                    </select>
-                </div>
-                <textarea id="text3" placeholder="最下部テキスト">フレーバーテキストや注釈など</textarea>
             </div>
 
-            <div class="download-container" style="margin-top: 10px; background:#e9ecef; padding:8px; border-radius:8px; flex-direction:column; gap:6px;">
-                <div style="display:flex; gap:8px; width:100%;">
-                    <button class="download-btn btn-surface" id="btn-hd">標準保存</button>
-                    <button class="download-btn btn-surface" id="btn-lite">軽量保存</button>
+            <div class="control-group group-text">
+                <div class="group-title">文字設定（上・中・下区画）</div>
+                
+                <div class="item-row bg-row-text">
+                    <div class="inline-controls">
+                        <span style="font-size:11px; font-weight:bold; color:#b28900;">【上】</span>
+                        <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
+                        <label>色:<input type="color" class="color-picker color-input" data-target="section1" value="#000000"></label>
+                        <select class="align-select small-select" data-target="section1" style="width:65px; margin-left:auto;">
+                            <option value="left" selected>左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </div>
+                    <textarea id="text1" placeholder="上部テキスト">カードのタイトルなど</textarea>
+                </div>
+
+                <div class="item-row bg-row-text">
+                    <div class="inline-controls">
+                        <span style="font-size:11px; font-weight:bold; color:#b28900;">【中】</span>
+                        <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
+                        <label>色:<input type="color" class="color-picker color-input" data-target="section2" value="#000000"></label>
+                        <select class="align-select small-select" data-target="section2" style="width:65px; margin-left:auto;">
+                            <option value="left" selected>左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </div>
+                    <textarea id="text2" placeholder="中央テキスト">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</textarea>
+                </div>
+
+                <div class="item-row bg-row-text">
+                    <div class="inline-controls">
+                        <span style="font-size:11px; font-weight:bold; color:#b28900;">【下】</span>
+                        <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
+                        <label>色:<input type="color" class="color-picker color-input" data-target="section3" value="#000000"></label>
+                        <select class="align-select small-select" data-target="section3" style="width:65px; margin-left:auto;">
+                            <option value="left" selected>左寄せ</option>
+                            <option value="center">中央</option>
+                            <option value="right">右寄せ</option>
+                        </select>
+                    </div>
+                    <textarea id="text3" placeholder="下部テキスト">フレーバーテキストや注釈など</textarea>
+                </div>
+            </div>
+
+            <div class="control-group group-save">
+                <div class="group-title">保存・カード裏面設定</div>
+                
+                <div class="download-container" style="margin-bottom: 8px;">
+                    <button class="download-btn btn-surface" id="btn-hd">表面 標準保存</button>
+                    <button class="download-btn btn-surface" id="btn-lite">表面 軽量保存</button>
                 </div>
                 
-                <div style="width:100%; border-top:1px dashed #bbb; margin:4px 0;"></div>
+                <div style="width:100%; border-top:1px dashed #b8daff; margin:6px 0;"></div>
                 
-                <div style="font-size:11px; font-weight:bold; color:#0056b3; margin-bottom:2px; border-left:3px solid #007bff; padding-left:4px;">カード裏面設定</div>
-                <div class="inline-controls" style="margin-bottom: 2px;">
-                    <select id="backSelect" style="flex: 1;">
-                        <option value="back01.png" selected>サンプル裏面01</option>
-                        <option value="back02.png">サンプル裏面02</option>
-                        <option value="back03.png">サンプル裏面03</option>
-                        <option value="back04.png">サンプル裏面04</option>
-                        <option value="back05.png">サンプル裏面05</option>
-                        <option value="solid">単色背景（カラー指定）</option>
-                    </select>
-                    <label id="backSolidColorLabel" style="display:none; gap:3px;">背景色:<input type="color" id="backSolidColor" class="color-input" value="#ffffff"></label>
-                </div>
-                <div style="margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
-                    <span style="font-size: 11px; color:#666;">自作画像優先読込:</span>
-                    <input type="file" id="backImageUpload" accept="image/*" style="font-size:11px; max-width:200px;">
+                <div class="item-row" style="background: rgba(255,255,255,0.7); border:1px solid #b8daff; padding:6px; margin-bottom:6px;">
+                    <div class="inline-controls" style="margin-bottom: 4px;">
+                        <select id="backSelect" style="flex: 1;">
+                            <option value="back01.png" selected>サンプル裏面01</option>
+                            <option value="back02.png">サンプル裏面02</option>
+                            <option value="back03.png">サンプル裏面03</option>
+                            <option value="back04.png">サンプル裏面04</option>
+                            <option value="back05.png">サンプル裏面05</option>
+                            <option value="solid">単色背景（カラー指定）</option>
+                        </select>
+                        <label id="backSolidColorLabel" style="display:none; gap:2px;">色:<input type="color" id="backSolidColor" class="color-input" value="#ffffff"></label>
+                    </div>
+                    <div class="inline-controls">
+                        <span style="font-size: 11px; color:#555;">画像アップロード(優先):</span>
+                        <input type="file" id="backImageUpload" accept="image/*" style="font-size:11px; max-width:180px;">
+                    </div>
                 </div>
 
                 <button class="download-btn btn-backend" id="btn-back" style="width:100%;">裏面画像を保存</button>
             </div>
+            
         </div>
 
         <div class="preview-area">
@@ -374,7 +411,7 @@
             <div class="preview-block">
                 <span class="preview-label">裏面プレビュー</span>
                 <div id="cardBackPreview">
-                    <img id="cardBackImg" src="back01.png" alt="カード裏面" crossorigin="anonymous">
+                    <img id="backImgDummy" style="display:none;"> <img id="cardBackImg" src="back01.png" alt="カード裏面" crossorigin="anonymous">
                 </div>
             </div>
         </div>
@@ -487,7 +524,6 @@
             select.addEventListener('change', (e) => { document.getElementById(e.target.getAttribute('data-target')).style.textAlign = e.target.value; });
         });
 
-        // 【新機能】フォント・文字燐光ロジック
         document.getElementById('fontSelect').addEventListener('change', (e) => {
             card.style.fontFamily = e.target.value;
             autoShrink();
@@ -495,11 +531,7 @@
         document.getElementById('glowToggle').addEventListener('change', (e) => {
             const sections = document.querySelectorAll('.section');
             sections.forEach(sec => {
-                if (e.target.checked) {
-                    sec.classList.remove('no-glow');
-                } else {
-                    sec.classList.add('no-glow');
-                }
+                if (e.target.checked) { sec.classList.remove('no-glow'); } else { sec.classList.add('no-glow'); }
             });
         });
 
@@ -508,10 +540,10 @@
         const solidColorLabel = document.getElementById('solidColorLabel');
         const solidColor = document.getElementById('solidColor');
 
-        // 表面背景ロジック（ピッカー表示を完全に制御）
         function handleBgChange() {
             solidColorLabel.style.display = 'none';
-            card.style.backgroundColor = '#ffffff';
+            // 単色時の土台ベースをピッカーカラーに連動（デフォルトは白）
+            card.style.backgroundColor = (bgSelect.value === 'solid' && !uploadedBgSrc) ? solidColor.value : '#ffffff';
 
             if (uploadedBgSrc) {
                 cardBg.style.display = 'block';
@@ -519,10 +551,9 @@
             } else {
                 const val = bgSelect.value;
                 if (val === 'solid') {
-                    solidColorLabel.style.display = 'flex'; // カラー指定時にピッカー出現
+                    solidColorLabel.style.display = 'flex';
                     cardBg.style.display = 'none';
                     cardBg.removeAttribute('src'); 
-                    card.style.backgroundColor = solidColor.value;
                 } else {
                     cardBg.style.display = 'block';
                     cardBg.src = val + '?t=' + new Date().getTime();
@@ -548,10 +579,10 @@
         const backSolidColorLabel = document.getElementById('backSolidColorLabel');
         const backSolidColor = document.getElementById('backSolidColor');
 
-        // 裏面背景ロジック（ピッカー表示を完全に制御）
         function handleBackBgChange() {
             backSolidColorLabel.style.display = 'none';
-            cardBackPreview.style.backgroundColor = '#ffffff';
+            // 単色時の裏面土台ベースをピッカーカラーに連動（デフォルトは白）
+            cardBackPreview.style.backgroundColor = (backSelect.value === 'solid' && !uploadedBackSrc) ? backSolidColor.value : '#ffffff';
 
             if (uploadedBackSrc) {
                 cardBackImg.style.display = 'block';
@@ -559,10 +590,9 @@
             } else {
                 const val = backSelect.value;
                 if (val === 'solid') {
-                    backSolidColorLabel.style.display = 'flex'; // カラー指定時にピッカー出現
+                    backSolidColorLabel.style.display = 'flex';
                     cardBackImg.style.display = 'none';
                     cardBackImg.removeAttribute('src');
-                    cardBackPreview.style.backgroundColor = backSolidColor.value;
                 } else {
                     cardBackImg.style.display = 'block';
                     cardBackImg.src = val + '?t=' + new Date().getTime();
