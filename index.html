@@ -12,7 +12,7 @@
     <style>
         body {
             font-family: 'Helvetica Neue', Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f5f7fa;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -39,41 +39,39 @@
             box-sizing: border-box;
         }
 
-        /* 3つの大枠区切り（コントラストを高めた背景色） */
+        /* 統一感をもたせた3つの大枠区切り */
         .control-group {
             padding: 12px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid #dcdfe6;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
             box-sizing: border-box;
         }
-        
-        /* 区画1: 全体・背景設定 (ライトグレー) */
-        .group-global { background: #ffffff; border: 1px solid #dcdfe6; }
-        /* 区画2: 文字設定 (マイルドイエローベージュ) */
-        .group-text { background: #fdfdf0; border: 1px solid #e6dfb8; }
-        /* 区画3: 保存・裏面設定 (マイルドブルー) */
-        .group-save { background: #f0f7ff; border: 1px solid #b8daff; }
 
         .group-title {
             font-weight: bold;
             font-size: 13px;
             color: #333;
             margin-bottom: 10px;
-            border-left: 4px solid #e0a800;
+            border-left: 4px solid #495057;
             padding-left: 6px;
         }
-        .group-save .group-title { border-left-color: #007bff; }
 
-        /* 各項目のインナーボックス（色差をつけて判別しやすく） */
+        /* 各項目のインナーボックス（背景トーンを統一） */
         .item-row {
             padding: 6px 8px;
             border-radius: 6px;
             margin-bottom: 6px;
             box-sizing: border-box;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
         }
-        .bg-row-a { background: #f4f6f8; border: 1px solid #e4e7ed; }
-        .bg-row-b { background: #eaedf1; border: 1px solid #dcdfe6; }
-        .bg-row-text { background: #ffffff; border: 1px solid #eedda9; margin-bottom: 8px; }
+        .bg-row-text {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            margin-bottom: 8px;
+        }
 
         .inline-controls {
             display: flex;
@@ -173,8 +171,8 @@
         #cardBg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* アスペクト比維持の強制枠内収め */
-            object-fit: contain;
+            /* 余白を作らずぴっちり広げる設定 */
+            object-fit: cover;
             opacity: 1;
             z-index: 1;
             box-sizing: border-box;
@@ -231,8 +229,8 @@
         #cardBackImg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* アスペクト比維持の強制枠内収め */
-            object-fit: contain;
+            /* 余白を作らずぴっちり広げる設定 */
+            object-fit: cover;
             z-index: 1;
             box-sizing: border-box;
         }
@@ -257,10 +255,10 @@
     <div class="container">
         <div class="control-panel">
             
-            <div class="control-group group-global">
+            <div class="control-group">
                 <div class="group-title">カード全体・背景設定</div>
                 
-                <div class="item-row bg-row-a inline-controls">
+                <div class="item-row inline-controls">
                     <label>枠色:<input type="color" id="borderColor" class="color-input" value="#333333"></label>
                     <label>不透明度:<input type="range" id="borderOpacity" min="0" max="100" value="100" style="width:45px; flex:none;"></label>
                     <label>太さ:<input type="number" id="borderWidth" class="small-input" value="12" min="0">px</label>
@@ -272,7 +270,7 @@
                     </label>
                 </div>
                 
-                <div class="item-row bg-row-b inline-controls">
+                <div class="item-row inline-controls">
                     <label style="flex: 1;">フォント:
                         <select id="fontSelect" style="width: auto; padding: 2px;">
                             <option value="sans-serif" style="font-family: sans-serif;" selected>Noto Sans Japanese</option>
@@ -291,8 +289,8 @@
                     <label style="cursor:pointer; font-weight: bold;"><input type="checkbox" id="glowToggle" checked>文字燐光</label>
                 </div>
                 
-                <div class="item-row bg-row-a">
-                    <div class="inline-controls" style="margin-bottom: 4px;">
+                <div class="item-row">
+                    <div class="inline-controls" style="margin-bottom: 6px;">
                         <select id="bgSelect" style="flex: 1;">
                             <option value="bg01.png" selected>サンプル01</option>
                             <option value="bg02.png">サンプル02</option>
@@ -302,24 +300,25 @@
                             <option value="solid">単色背景（カラー指定）</option>
                         </select>
                         <label id="solidColorLabel" style="display:none; gap:2px;">色:<input type="color" id="solidColor" class="color-input" value="#ffffff"></label>
-                        <label id="bgOpacityLabel" style="width: 80px; flex:none;">濃さ:<input type="range" id="bgOpacity" min="0" max="100" value="100"></label>
                     </div>
-                    <div class="inline-controls">
+                    <div class="inline-controls" style="margin-bottom: 6px;">
                         <span style="font-size: 11px; color:#555;">画像アップロード(優先):</span>
                         <input type="file" id="imageUpload" accept="image/*" style="font-size:11px; max-width:180px;">
                     </div>
-                    <div class="inline-controls" style="margin-top: 6px; border-top: 1px dashed #ccc; padding-top: 4px;">
-                        <label style="cursor:pointer; color:#0056b3;"><input type="checkbox" id="borderModeToggle"> 枠線に合わせて背景画像を縮小（表裏連動）</label>
+                    
+                    <div class="inline-controls" style="border-top: 1px dashed #ddd; padding-top: 6px; justify-content: space-between;">
+                        <label style="cursor:pointer; color:#495057;"><input type="checkbox" id="borderModeToggle"> 画像を枠線に合わせる</label>
+                        <label id="bgOpacityLabel" style="width: 110px; display: flex; align-items: center; gap: 4px;">画像の濃さ:<input type="range" id="bgOpacity" min="0" max="100" value="100"></label>
                     </div>
                 </div>
             </div>
 
-            <div class="control-group group-text">
+            <div class="control-group">
                 <div class="group-title">文字設定（上・中・下区画）</div>
                 
                 <div class="item-row bg-row-text">
                     <div class="inline-controls">
-                        <span style="font-size:11px; font-weight:bold; color:#b28900;">【上】</span>
+                        <span style="font-size:11px; font-weight:bold; color:#495057;">【上】</span>
                         <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
                         <label>色:<input type="color" class="color-picker color-input" data-target="section1" value="#000000"></label>
                         <select class="align-select small-select" data-target="section1" style="width:65px; margin-left:auto;">
@@ -333,7 +332,7 @@
 
                 <div class="item-row bg-row-text">
                     <div class="inline-controls">
-                        <span style="font-size:11px; font-weight:bold; color:#b28900;">【中】</span>
+                        <span style="font-size:11px; font-weight:bold; color:#495057;">【中】</span>
                         <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
                         <label>色:<input type="color" class="color-picker color-input" data-target="section2" value="#000000"></label>
                         <select class="align-select small-select" data-target="section2" style="width:65px; margin-left:auto;">
@@ -347,7 +346,7 @@
 
                 <div class="item-row bg-row-text">
                     <div class="inline-controls">
-                        <span style="font-size:11px; font-weight:bold; color:#b28900;">【下】</span>
+                        <span style="font-size:11px; font-weight:bold; color:#495057;">【下】</span>
                         <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
                         <label>色:<input type="color" class="color-picker color-input" data-target="section3" value="#000000"></label>
                         <select class="align-select small-select" data-target="section3" style="width:65px; margin-left:auto;">
@@ -360,7 +359,7 @@
                 </div>
             </div>
 
-            <div class="control-group group-save">
+            <div class="control-group">
                 <div class="group-title">保存・カード裏面設定</div>
                 
                 <div class="download-container" style="margin-bottom: 8px;">
@@ -368,9 +367,9 @@
                     <button class="download-btn btn-surface" id="btn-lite">表面 軽量保存</button>
                 </div>
                 
-                <div style="width:100%; border-top:1px dashed #b8daff; margin:6px 0;"></div>
+                <div style="width:100%; border-top:1px dashed #dcdfe6; margin:6px 0;"></div>
                 
-                <div class="item-row" style="background: rgba(255,255,255,0.7); border:1px solid #b8daff; padding:6px; margin-bottom:6px;">
+                <div class="item-row" style="background: #ffffff; padding:6px; margin-bottom:6px;">
                     <div class="inline-controls" style="margin-bottom: 4px;">
                         <select id="backSelect" style="flex: 1;">
                             <option value="back01.png" selected>サンプル裏面01</option>
@@ -411,7 +410,8 @@
             <div class="preview-block">
                 <span class="preview-label">裏面プレビュー</span>
                 <div id="cardBackPreview">
-                    <img id="backImgDummy" style="display:none;"> <img id="cardBackImg" src="back01.png" alt="カード裏面" crossorigin="anonymous">
+                    <img id="backImgDummy" style="display:none;">
+                    <img id="cardBackImg" src="back01.png" alt="カード裏面" crossorigin="anonymous">
                 </div>
             </div>
         </div>
@@ -542,7 +542,6 @@
 
         function handleBgChange() {
             solidColorLabel.style.display = 'none';
-            // 単色時の土台ベースをピッカーカラーに連動（デフォルトは白）
             card.style.backgroundColor = (bgSelect.value === 'solid' && !uploadedBgSrc) ? solidColor.value : '#ffffff';
 
             if (uploadedBgSrc) {
@@ -581,7 +580,6 @@
 
         function handleBackBgChange() {
             backSolidColorLabel.style.display = 'none';
-            // 単色時の裏面土台ベースをピッカーカラーに連動（デフォルトは白）
             cardBackPreview.style.backgroundColor = (backSelect.value === 'solid' && !uploadedBackSrc) ? backSolidColor.value : '#ffffff';
 
             if (uploadedBackSrc) {
