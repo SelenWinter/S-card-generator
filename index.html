@@ -39,6 +39,7 @@
             box-sizing: border-box;
         }
 
+        /* 統一感をもたせた3つの大枠区切り */
         .control-group {
             padding: 12px;
             border-radius: 8px;
@@ -57,6 +58,7 @@
             padding-left: 6px;
         }
 
+        /* 各項目のインナーボックス（背景トーンを統一） */
         .item-row {
             padding: 6px 8px;
             border-radius: 6px;
@@ -103,6 +105,7 @@
 
         textarea { height: 38px; resize: vertical; margin-top: 4px; font-size: 11px; }
 
+        /* 保存エリアボタン */
         .download-container {
             display: flex;
             gap: 8px;
@@ -151,7 +154,7 @@
             border-radius: 10px;
         }
 
-        /* 完全な2:3アスペクト比（350px × 525px）に変更 */
+        /* 縦サイズのみ 490px ➔ 525px（完全な2:3）に変更 */
         #card {
             width: 350px;
             height: 525px;
@@ -166,10 +169,10 @@
             justify-content: flex-start;
         }
 
-        /* html2canvasでバグらないcoverに戻し、2:3化でピッタリ収まるように */
         #cardBg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
+            /* 余白を作らずぴっちり広げる設定 */
             object-fit: cover;
             opacity: 1;
             z-index: 1;
@@ -211,7 +214,7 @@
 
         #section1 { padding-top: 6px; }
 
-        /* 裏面も完全な2:3（350px × 525px）に変更 */
+        /* 裏面も縦サイズのみ 490px ➔ 525px（完全な2:3）に変更 */
         #cardBackPreview {
             width: 350px;
             height: 525px;
@@ -228,6 +231,7 @@
         #cardBackImg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
+            /* 余白を作らずぴっちり広げる設定 */
             object-fit: cover;
             z-index: 1;
             box-sizing: border-box;
@@ -305,11 +309,8 @@
                     </div>
                     
                     <div class="inline-controls" style="border-top: 1px dashed #ddd; padding-top: 6px; justify-content: space-between;">
-                        <label style="cursor:pointer; color:#495057; flex-shrink: 0;"><input type="checkbox" id="borderModeToggle"> 画像を枠線に合わせる</label>
-                        <label id="bgOpacityLabel" style="display: flex; align-items: center; gap: 4px; flex: 1; justify-content: flex-end; max-width: 140px;">
-                            <span style="white-space: nowrap;">濃さ:</span>
-                            <input type="range" id="bgOpacity" min="0" max="100" value="100" style="width: 100%; min-width: 50px;">
-                        </label>
+                        <label style="cursor:pointer; color:#495057;"><input type="checkbox" id="borderModeToggle"> 画像を枠線に合わせる</label>
+                        <label id="bgOpacityLabel" style="width: 110px; display: flex; align-items: center; gap: 4px;">画像の濃さ:<input type="range" id="bgOpacity" min="0" max="100" value="100"></label>
                     </div>
                 </div>
             </div>
@@ -467,4 +468,172 @@
                 cardBackImg.style.transform = `translate(-${width}px, -${width}px)`;
             } else {
                 cardBackImg.style.top = '0'; cardBackImg.style.left = '0';
-                cardBackImg.style.width = '100
+                cardBackImg.style.width = '100%'; cardBackImg.style.height = '100%';
+                cardBackImg.style.transform = 'none';
+            }
+        }
+
+        function autoShrink() {
+            resetSizes();
+            const borderWidth = parseInt(document.getElementById('borderWidth').value) || 0;
+            // 高さの判定基準を525pxに修正
+            const maxHeight = 525 - (borderWidth * 2);
+            let currentHeight = cardContent.scrollHeight;
+            let s1 = parseInt(document.getElementById('size1').value) || 22;
+            let s2 = parseInt(document.getElementById('size2').value) || 16;
+            let s3 = parseInt(document.getElementById('size3').value) || 14;
+
+            while (currentHeight > maxHeight && (s1 > 8 || s2 > 8 || s3 > 8)) {
+                if(s1 > 8) s1--; if(s2 > 8) s2--; if(s3 > 8) s3--;
+                document.getElementById('section1').style.fontSize = s1 + 'px';
+                document.getElementById('section2').style.fontSize = s2 + 'px';
+                document.getElementById('section3').style.fontSize = s3 + 'px';
+                currentHeight = cardContent.scrollHeight;
+            }
+        }
+
+        function resetSizes() {
+            document.getElementById('section1').style.fontSize = (document.getElementById('size1').value || 22) + 'px';
+            document.getElementById('section2').style.fontSize = (document.getElementById('size2').value || 16) + 'px';
+            document.getElementById('section3').style.fontSize = (document.getElementById('size3').value || 14) + 'px';
+        }
+
+        ['text1', 'text2', 'text3'].forEach(id => {
+            document.getElementById(id).addEventListener('input', (e) => {
+                const targetId = id.replace('text', 'section');
+                document.getElementById(targetId).textContent = e.target.value;
+                autoShrink();
+            });
+        });
+
+        document.querySelectorAll('.size-input').forEach(input => {
+            input.addEventListener('input', () => { autoShrink(); });
+        });
+
+        document.getElementById('borderWidth').addEventListener('input', () => { updateBorder(); autoShrink(); });
+        document.getElementById('borderColor').addEventListener('input', (e) => {
+            updateBorder();
+            document.querySelectorAll('.divider').forEach(div => { div.style.backgroundColor = e.target.value; });
+        });
+        document.getElementById('borderOpacity').addEventListener('input', updateBorder);
+        document.getElementById('borderModeToggle').addEventListener('change', updateBorder);
+        document.getElementById('valignSelect').addEventListener('change', (e) => { cardContent.style.justifyContent = e.target.value; autoShrink(); });
+        document.getElementById('bgOpacity').addEventListener('input', (e) => { cardBg.style.opacity = e.target.value / 100; });
+
+        document.querySelectorAll('.color-picker').forEach(picker => {
+            picker.addEventListener('input', (e) => { document.getElementById(e.target.getAttribute('data-target')).style.color = e.target.value; });
+        });
+        document.querySelectorAll('.align-select').forEach(select => {
+            select.addEventListener('change', (e) => { document.getElementById(e.target.getAttribute('data-target')).style.textAlign = e.target.value; });
+        });
+
+        document.getElementById('fontSelect').addEventListener('change', (e) => {
+            card.style.fontFamily = e.target.value;
+            autoShrink();
+        });
+        document.getElementById('glowToggle').addEventListener('change', (e) => {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(sec => {
+                if (e.target.checked) { sec.classList.remove('no-glow'); } else { sec.classList.add('no-glow'); }
+            });
+        });
+
+        const bgSelect = document.getElementById('bgSelect');
+        const imageUpload = document.getElementById('imageUpload');
+        const solidColorLabel = document.getElementById('solidColorLabel');
+        const solidColor = document.getElementById('solidColor');
+
+        function handleBgChange() {
+            solidColorLabel.style.display = 'none';
+            card.style.backgroundColor = (bgSelect.value === 'solid' && !uploadedBgSrc) ? solidColor.value : '#ffffff';
+
+            if (uploadedBgSrc) {
+                cardBg.style.display = 'block';
+                cardBg.setAttribute('src', uploadedBgSrc);
+            } else {
+                const val = bgSelect.value;
+                if (val === 'solid') {
+                    solidColorLabel.style.display = 'flex';
+                    cardBg.style.display = 'none';
+                    cardBg.removeAttribute('src'); 
+                } else {
+                    cardBg.style.display = 'block';
+                    cardBg.src = val + '?t=' + new Date().getTime();
+                }
+            }
+        }
+        bgSelect.addEventListener('change', handleBgChange);
+        solidColor.addEventListener('input', () => { if(!uploadedBgSrc && bgSelect.value === 'solid') card.style.backgroundColor = solidColor.value; });
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => { uploadedBgSrc = ev.target.result; handleBgChange(); };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedBgSrc = null; handleBgChange();
+            }
+        });
+
+        const backSelect = document.getElementById('backSelect');
+        const backImageUpload = document.getElementById('backImageUpload');
+        const backSolidColorLabel = document.getElementById('backSolidColorLabel');
+        const backSolidColor = document.getElementById('backSolidColor');
+
+        function handleBackBgChange() {
+            backSolidColorLabel.style.display = 'none';
+            cardBackPreview.style.backgroundColor = (backSelect.value === 'solid' && !uploadedBackSrc) ? backSolidColor.value : '#ffffff';
+
+            if (uploadedBackSrc) {
+                cardBackImg.style.display = 'block';
+                cardBackImg.setAttribute('src', uploadedBackSrc);
+            } else {
+                const val = backSelect.value;
+                if (val === 'solid') {
+                    backSolidColorLabel.style.display = 'flex';
+                    cardBackImg.style.display = 'none';
+                    cardBackImg.removeAttribute('src');
+                } else {
+                    cardBackImg.style.display = 'block';
+                    cardBackImg.src = val + '?t=' + new Date().getTime();
+                }
+            }
+        }
+        backSelect.addEventListener('change', handleBackBgChange);
+        backSolidColor.addEventListener('input', () => { if(!uploadedBackSrc && backSelect.value === 'solid') cardBackPreview.style.backgroundColor = backSolidColor.value; });
+
+        backImageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => { uploadedBackSrc = ev.target.result; handleBackBgChange(); };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedBackSrc = null; handleBackBgChange();
+            }
+        });
+
+        function saveCard(targetElement, scaleValue, filename) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "作成中..."; btn.disabled = true;
+
+            html2canvas(targetElement, { useCORS: true, scale: scaleValue, logging: false }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = filename; link.href = canvas.toDataURL('image/png'); link.click();
+                btn.innerText = originalText; btn.disabled = false;
+            });
+        }
+
+        document.getElementById('btn-hd').addEventListener('click', (e) => saveCard(card, 1, 'card-standard.png'));
+        document.getElementById('btn-lite').addEventListener('click', (e) => saveCard(card, 0.8, 'card-lite.png'));
+        document.getElementById('btn-back').addEventListener('click', (e) => saveCard(cardBackPreview, 1, 'card-back.png'));
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateBorder();
+            autoShrink();
+        });
+    </script>
+</body>
+</html>
