@@ -67,6 +67,13 @@
             background: #f8f9fa;
             border: 1px solid #e9ecef;
         }
+        
+        /* イラスト設定用の中枠組み */
+        .illustration-box {
+            background: #f1f3f5;
+            border: 1px solid #ced4da;
+        }
+        
         .bg-row-text {
             background: #ffffff;
             border: 1px solid #e9ecef;
@@ -154,7 +161,6 @@
             border-radius: 10px;
         }
 
-        /* 縦サイズのみ 490px ➔ 525px（完全な2:3）に変更 */
         #card {
             width: 350px;
             height: 525px;
@@ -172,7 +178,6 @@
         #cardBg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* 余白を作らずぴっちり広げる設定 */
             object-fit: cover;
             opacity: 1;
             z-index: 1;
@@ -214,7 +219,24 @@
 
         #section1 { padding-top: 6px; }
 
-        /* 裏面も縦サイズのみ 490px ➔ 525px（完全な2:3）に変更 */
+        /* 新設：カード内イラスト配置エリア */
+        .card-illustration-wrapper {
+            display: none; /* 初期はOFF */
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            margin: 4px 0;
+        }
+        
+        #cardIllustration {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+            box-sizing: border-box;
+        }
+
         #cardBackPreview {
             width: 350px;
             height: 525px;
@@ -231,7 +253,6 @@
         #cardBackImg {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* 余白を作らずぴっちり広げる設定 */
             object-fit: cover;
             z-index: 1;
             box-sizing: border-box;
@@ -247,6 +268,12 @@
             padding-top: 10px;
             width: 100%;
             max-width: 1100px;
+        }
+        
+        /* グレーアウト用スタイル */
+        .disabled-label {
+            opacity: 0.4;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -312,6 +339,32 @@
                         <label style="cursor:pointer; color:#495057;"><input type="checkbox" id="borderModeToggle"> 画像を枠線に合わせる</label>
                         <label id="bgOpacityLabel" style="display: flex; align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0;">画像の濃さ:<input type="range" id="bgOpacity" min="0" max="100" value="100" style="width: 60px; flex: none;"></label>
                     </div>
+                </div>
+
+                <div class="item-row illustration-box">
+                    <div style="font-size: 11px; font-weight: bold; color: #212529; margin-bottom: 6px; border-bottom: 1px solid #dee2e6; padding-bottom: 3px; display:flex; justify-content:space-between;">
+                        <span>弾幕・TCG風 イラスト枠設定</span>
+                        <label style="cursor:pointer; font-weight:bold; color:#007bff;"><input type="checkbox" id="illuEnable"> 画像を追加ON</label>
+                    </div>
+                    
+                    <div class="inline-controls" style="margin-bottom: 6px;">
+                        <span style="font-size: 11px; color:#555;">イラスト選択:</span>
+                        <input type="file" id="illuUpload" accept="image/*" style="font-size:11px; max-width:180px;">
+                    </div>
+
+                    <div class="inline-controls" style="margin-bottom: 6px; background:#fff; padding:4px; border-radius:4px; border:1px solid #e9ecef;">
+                        <label style="cursor:pointer;"><input type="checkbox" id="illuBorderEnable"> 縁取りON</label>
+                        <label id="illuBorderColorLabel">色:<input type="color" id="illuBorderColor" class="color-input" value="#333333"></label>
+                        <label id="illuBorderWidthLabel">太さ:<input type="number" id="illuBorderWidth" class="small-input" value="2" min="0">px</label>
+                    </div>
+
+                    <div class="inline-controls" style="background:#fff; padding:4px; border-radius:4px; border:1px solid #e9ecef;">
+                        <label style="cursor:pointer; font-weight:bold;"><input type="checkbox" id="illuAspectLock" checked> 縦横比固定</label>
+                        <label>縦サイズ:<input type="number" id="illuHeight" class="small-input" value="180" min="10">px</label>
+                        <label id="illuWidthLabel" class="disabled-label">横サイズ:<input type="number" id="illuWidth" class="small-input" value="280" min="10" disabled>px</label>
+                        <label style="margin-left:auto;">左右余白:<input type="number" id="illuMargin" class="small-input" value="20" min="0">px</label>
+                    </div>
+                    <div style="font-size: 9px; color:#6c757d; margin-top:4px; text-align:right;">※イラストは常に中央配置されます。トリミングは事前にお済ませください。</div>
                 </div>
             </div>
 
@@ -405,6 +458,11 @@
                     <div class="card-content-container" id="cardContent">
                         <div id="section1" class="section" style="font-size: 22px;">カードのタイトルなど</div>
                         <div class="divider"></div>
+                        
+                        <div id="illuWrapper" class="card-illustration-wrapper">
+                            <img id="cardIllustration" src="" alt="" style="display:none;">
+                        </div>
+                        
                         <div id="section2" class="section" style="font-size: 16px;">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</div>
                         <div class="divider"></div>
                         <div id="section3" class="section" style="font-size: 14px;">フレーバーテキストや注釈など</div>
@@ -435,8 +493,23 @@
         const cardBackPreview = document.getElementById('cardBackPreview');
         const cardBackImg = document.getElementById('cardBackImg');
         
+        // イラスト関連の要素
+        const illuEnable = document.getElementById('illuEnable');
+        const illuUpload = document.getElementById('illuUpload');
+        const illuWrapper = document.getElementById('illuWrapper');
+        const cardIllustration = document.getElementById('cardIllustration');
+        const illuBorderEnable = document.getElementById('illuBorderEnable');
+        const illuBorderColor = document.getElementById('illuBorderColor');
+        const illuBorderWidth = document.getElementById('illuBorderWidth');
+        const illuAspectLock = document.getElementById('illuAspectLock');
+        const illuHeight = document.getElementById('illuHeight');
+        const illuWidth = document.getElementById('illuWidth');
+        const illuWidthLabel = document.getElementById('illuWidthLabel');
+        const illuMargin = document.getElementById('illuMargin');
+        
         let uploadedBgSrc = null;
         let uploadedBackSrc = null;
+        let uploadedIlluSrc = null;
 
         function updateBorder() {
             const hex = document.getElementById('borderColor').value;
@@ -476,6 +549,46 @@
             }
         }
 
+        // ⭐新設：イラスト枠の見た目をリアルタイム更新する関数
+        function updateIllustrationStyle() {
+            if (illuEnable.checked && uploadedIlluSrc) {
+                illuWrapper.style.display = 'flex';
+                cardIllustration.style.display = 'block';
+                cardIllustration.src = uploadedIlluSrc;
+                
+                // 縦横サイズ・比率固定の設定
+                illuWrapper.style.height = illuHeight.value + 'px';
+                if (illuAspectLock.checked) {
+                    illuWidth.disabled = true;
+                    illuWidthLabel.classList.add('disabled-label');
+                    cardIllustration.style.width = 'auto';
+                    cardIllustration.style.height = '100%';
+                    cardIllustration.style.objectFit = 'contain';
+                } else {
+                    illuWidth.disabled = false;
+                    illuWidthLabel.classList.remove('disabled-label');
+                    cardIllustration.style.width = illuWidth.value + 'px';
+                    cardIllustration.style.height = illuHeight.value + 'px';
+                    cardIllustration.style.objectFit = 'fill'; 
+                }
+
+                // 左右余白の設定（wrapper自体のmax-widthを制限して中央寄せ）
+                const sideMargin = parseInt(illuMargin.value) || 0;
+                illuWrapper.style.paddingLeft = sideMargin + 'px';
+                illuWrapper.style.paddingRight = sideMargin + 'px';
+
+                // 縁取り設定
+                if (illuBorderEnable.checked) {
+                    cardIllustration.style.border = `${illuBorderWidth.value}px solid ${illuBorderColor.value}`;
+                } else {
+                    cardIllustration.style.border = 'none';
+                }
+            } else {
+                illuWrapper.style.display = 'none';
+                cardIllustration.style.display = 'none';
+            }
+        }
+
         function autoShrink() {
             resetSizes();
             const borderWidth = parseInt(document.getElementById('borderWidth').value) || 0;
@@ -494,7 +607,6 @@
             }
         }
 
-        // 全区画の余白サイズを反映する関数
         function applyPaddingAll() {
             document.querySelectorAll('.padding-input').forEach(input => {
                 const targetId = input.getAttribute('data-target');
@@ -510,7 +622,7 @@
             document.getElementById('section1').style.fontSize = (document.getElementById('size1').value || 22) + 'px';
             document.getElementById('section2').style.fontSize = (document.getElementById('size2').value || 16) + 'px';
             document.getElementById('section3').style.fontSize = (document.getElementById('size3').value || 14) + 'px';
-            applyPaddingAll(); // リセット時に余白も再設定
+            applyPaddingAll();
         }
 
         ['text1', 'text2', 'text3'].forEach(id => {
@@ -525,7 +637,6 @@
             input.addEventListener('input', () => { autoShrink(); });
         });
 
-        // 余白の数値が変更されたらプレビューに即時反映
         document.querySelectorAll('.padding-input').forEach(input => {
             input.addEventListener('input', () => {
                 applyPaddingAll();
@@ -559,6 +670,35 @@
             sections.forEach(sec => {
                 if (e.target.checked) { sec.classList.remove('no-glow'); } else { sec.classList.add('no-glow'); }
             });
+        });
+
+        // イラスト枠用イベントリスナー群
+        illuEnable.addEventListener('change', () => { updateIllustrationStyle(); autoShrink(); });
+        illuAspectLock.addEventListener('change', () => { updateIllustrationStyle(); autoShrink(); });
+        illuBorderEnable.addEventListener('change', updateIllustrationStyle);
+        illuBorderColor.addEventListener('input', updateIllustrationStyle);
+        illuBorderWidth.addEventListener('input', updateIllustrationStyle);
+        illuHeight.addEventListener('input', () => { updateIllustrationStyle(); autoShrink(); });
+        illuWidth.addEventListener('input', () => { updateIllustrationStyle(); autoShrink(); });
+        illuMargin.addEventListener('input', () => { updateIllustrationStyle(); autoShrink(); });
+
+        illuUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => { 
+                    uploadedIlluSrc = ev.target.result; 
+                    // 画像が上がったら自動的にONにチェックを入れる親切設計
+                    illuEnable.checked = true;
+                    updateIllustrationStyle(); 
+                    autoShrink(); 
+                };
+                reader.readAsDataURL(file);
+            } else {
+                uploadedIlluSrc = null;
+                updateIllustrationStyle();
+                autoShrink();
+            }
         });
 
         const bgSelect = document.getElementById('bgSelect');
@@ -655,6 +795,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             updateBorder();
+            updateIllustrationStyle();
             autoShrink();
         });
     </script>
