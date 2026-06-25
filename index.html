@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S-Card-Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru&family=M+PLUS+1p:wght@400;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+    
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body {
@@ -173,11 +177,17 @@
             box-sizing: border-box;
             white-space: pre-wrap;
             word-wrap: break-word;
+            /* 初期値：文字燐光オン */
             text-shadow: 1px 1px 1px #fff, -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff;
             font-size: 18px;
             color: #000000;
             text-align: left;
             transition: font-size 0.1s;
+        }
+
+        /* 文字燐光（アウトライン）がオフのときのスタイル用クラス */
+        .no-glow {
+            text-shadow: none !important;
         }
 
         .divider {
@@ -243,6 +253,19 @@
                         </select>
                     </label>
                 </div>
+                
+                <div class="inline-controls" style="background: #eef2f7; padding: 4px; border-radius: 4px; margin-bottom: 8px;">
+                    <label style="flex: 1;">フォント:
+                        <select id="fontSelect" style="width: auto; padding: 2px;">
+                            <option value="sans-serif" selected>標準ゴシック体</option>
+                            <option value="'Noto Serif JP', serif">美しい明朝体</option>
+                            <option value="'M PLUS 1p', sans-serif" style="font-weight:700;">力強い太ゴシック</option>
+                            <option value="'Kiwi Maru', serif">ポップな丸ゴシック</option>
+                        </select>
+                    </label>
+                    <label style="cursor:pointer; font-weight: bold;"><input type="checkbox" id="glowToggle" checked> 文字燐光</label>
+                </div>
+
                 <div class="inline-controls">
                     <label style="cursor:pointer;"><input type="checkbox" id="borderModeToggle"> 枠線に合わせて背景画像を縮小（表裏連動）</label>
                 </div>
@@ -322,7 +345,7 @@
                         <option value="back05.png">サンプル裏面05</option>
                         <option value="solid">単色背景（カラー指定）</option>
                     </select>
-                    <label id="backSolidColorLabel" style="display:none; gap:3px;">色:<input type="color" id="backSolidColor" class="color-input" value="#ffffff"></label>
+                    <label id="backSolidColorLabel" style="display:none; gap:3px;">背景色:<input type="color" id="backSolidColor" class="color-input" value="#ffffff"></label>
                 </div>
                 <div style="margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
                     <span style="font-size: 11px; color:#666;">自作画像優先読込:</span>
@@ -464,15 +487,31 @@
             select.addEventListener('change', (e) => { document.getElementById(e.target.getAttribute('data-target')).style.textAlign = e.target.value; });
         });
 
+        // 【新機能】フォント・文字燐光ロジック
+        document.getElementById('fontSelect').addEventListener('change', (e) => {
+            card.style.fontFamily = e.target.value;
+            autoShrink();
+        });
+        document.getElementById('glowToggle').addEventListener('change', (e) => {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(sec => {
+                if (e.target.checked) {
+                    sec.classList.remove('no-glow');
+                } else {
+                    sec.classList.add('no-glow');
+                }
+            });
+        });
+
         const bgSelect = document.getElementById('bgSelect');
         const imageUpload = document.getElementById('imageUpload');
         const solidColorLabel = document.getElementById('solidColorLabel');
         const solidColor = document.getElementById('solidColor');
 
-        // 【大修正】単色（solid）時は画像タグを「完全に消し去る」ロジックへ移行
+        // 表面背景ロジック（ピッカー表示を完全に制御）
         function handleBgChange() {
             solidColorLabel.style.display = 'none';
-            card.style.backgroundColor = '#ffffff'; // デフォルトリセット
+            card.style.backgroundColor = '#ffffff';
 
             if (uploadedBgSrc) {
                 cardBg.style.display = 'block';
@@ -480,7 +519,7 @@
             } else {
                 const val = bgSelect.value;
                 if (val === 'solid') {
-                    // 単色設定のときは画像タグ自体を非表示(none)にして、親の枠（card）を染める
+                    solidColorLabel.style.display = 'flex'; // カラー指定時にピッカー出現
                     cardBg.style.display = 'none';
                     cardBg.removeAttribute('src'); 
                     card.style.backgroundColor = solidColor.value;
@@ -509,10 +548,10 @@
         const backSolidColorLabel = document.getElementById('backSolidColorLabel');
         const backSolidColor = document.getElementById('backSolidColor');
 
-        // 【大修正】裏面の単色設定も同様に、画像タグを「完全に消し去る」
+        // 裏面背景ロジック（ピッカー表示を完全に制御）
         function handleBackBgChange() {
             backSolidColorLabel.style.display = 'none';
-            cardBackPreview.style.backgroundColor = '#ffffff'; // デフォルトリセット
+            cardBackPreview.style.backgroundColor = '#ffffff';
 
             if (uploadedBackSrc) {
                 cardBackImg.style.display = 'block';
@@ -520,7 +559,7 @@
             } else {
                 const val = backSelect.value;
                 if (val === 'solid') {
-                    // 単色設定のときは画像タグ自体を非表示(none)にして、裏面の土台を染める
+                    backSolidColorLabel.style.display = 'flex'; // カラー指定時にピッカー出現
                     cardBackImg.style.display = 'none';
                     cardBackImg.removeAttribute('src');
                     cardBackPreview.style.backgroundColor = backSolidColor.value;
