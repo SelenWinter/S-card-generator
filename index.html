@@ -85,6 +85,7 @@
 
         textarea { height: 40px; resize: vertical; margin-top: 2px; font-size: 11px; }
 
+        /* 【デザイン変更】保存ブロックのレイアウトと色の一体感 */
         .download-container {
             display: flex;
             gap: 8px;
@@ -99,13 +100,27 @@
             font-size: 12px;
             font-weight: bold;
             cursor: pointer;
+            transition: background 0.2s;
         }
-        #btn-hd { background-color: #6c757d; }
-        #btn-lite { background-color: #28a745; }
-        #btn-back { background-color: #007bff; }
-        #btn-hd:hover { background-color: #5a6268; }
-        #btn-lite:hover { background-color: #218838; }
-        #btn-back:hover { background-color: #0056b3; }
+        
+        /* 表面用ボタン：シックなダーク系 */
+        .btn-surface { background-color: #495057; }
+        .btn-surface:hover { background-color: #343a40; }
+        
+        /* 裏面用ボタン・コントロール：スマートなブルー系 */
+        .btn-backend { background-color: #007bff; }
+        .btn-backend:hover { background-color: #0056b3; }
+
+        .file-input-label {
+            font-size: 11px;
+            color: #495057;
+            background: #e9ecef;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            cursor: pointer;
+            display: inline-block;
+        }
 
         .preview-area {
             flex: 1;
@@ -203,9 +218,11 @@
         }
 
         #cardBackImg {
-            width: 100%;
-            height: 100%;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover;
+            z-index: 1;
+            box-sizing: border-box;
         }
 
         footer {
@@ -241,7 +258,7 @@
                     </label>
                 </div>
                 <div class="inline-controls">
-                    <label style="cursor:pointer;"><input type="checkbox" id="borderModeToggle"> 枠線に合わせて画像を縮小</label>
+                    <label style="cursor:pointer;"><input type="checkbox" id="borderModeToggle"> 枠線に合わせて背景画像を縮小（表裏連動）</label>
                 </div>
                 
                 <div class="inline-controls" style="margin-top: 6px;">
@@ -252,17 +269,18 @@
                         <option value="bg04.png">サンプル画像04</option>
                         <option value="bg05.png">サンプル画像05</option>
                         <option value="solid">単色背景（カラー指定）</option>
-                        <option value="upload">PCから画像をアップロード</option>
                     </select>
                     <label id="solidColorLabel" style="display:none; gap:3px;">背景色:<input type="color" id="solidColor" class="color-input" value="#ffffff"></label>
                     <label id="bgOpacityLabel" style="flex: 1; min-width: 100px;">濃さ:
                         <input type="range" id="bgOpacity" min="0" max="100" value="100">
                     </label>
                 </div>
-                <input type="file" id="imageUpload" accept="image/*" style="display:none; margin-top:5px;">
+                <div style="margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 11px; color:#666;">自作画像優先読込:</span>
+                    <input type="file" id="imageUpload" accept="image/*" style="font-size:11px; max-width:200px;">
+                </div>
 
                 <div class="group-title" style="margin-top: 12px;">文字設定（各区画）</div>
-                <!-- 区画1 -->
                 <div class="inline-controls">
                     <span style="font-size:11px; font-weight:bold; color:#555;">【上】</span>
                     <label>サイズ:<input type="number" id="size1" class="size-input small-input" data-target="section1" value="22">px</label>
@@ -275,7 +293,6 @@
                 </div>
                 <textarea id="text1" placeholder="最上部テキスト">カードのタイトルなど</textarea>
 
-                <!-- 区画2 -->
                 <div class="inline-controls" style="margin-top: 6px;">
                     <span style="font-size:11px; font-weight:bold; color:#555;">【中】</span>
                     <label>サイズ:<input type="number" id="size2" class="size-input small-input" data-target="section2" value="16">px</label>
@@ -288,7 +305,6 @@
                 </div>
                 <textarea id="text2" placeholder="中央テキスト">メインの説明文。文字をたくさん入力してカードの下部からはみ出しそうになると、自動的に文字サイズが縮小されて枠内に収まります。</textarea>
 
-                <!-- 区画3 -->
                 <div class="inline-controls" style="margin-top: 6px;">
                     <span style="font-size:11px; font-weight:bold; color:#555;">【下】</span>
                     <label>サイズ:<input type="number" id="size3" class="size-input small-input" data-target="section3" value="14">px</label>
@@ -300,30 +316,34 @@
                     </select>
                 </div>
                 <textarea id="text3" placeholder="最下部テキスト">フレーバーテキストや注釈など</textarea>
+            </div>
 
-                <!-- カード裏面設定 -->
-                <div class="group-title" style="margin-top: 12px;">カード裏面設定</div>
-                <div class="inline-controls">
+            <div class="download-container" style="margin-top: 10px; background:#e9ecef; padding:8px; border-radius:8px; flex-direction:column; gap:6px;">
+                <div style="display:flex; gap:8px; width:100%;">
+                    <button class="download-btn btn-surface" id="btn-hd">標準保存</button>
+                    <button class="download-btn btn-surface" id="btn-lite">軽量保存</button>
+                </div>
+                
+                <div style="width:100%; border-top:1px dashed #bbb; margin:4px 0;"></div>
+                
+                <div style="font-size:11px; font-weight:bold; color:#0056b3; margin-bottom:2px; border-left:3px solid #007bff; padding-left:4px;">カード裏面設定</div>
+                <div class="inline-controls" style="margin-bottom: 2px;">
                     <select id="backSelect" style="flex: 1;">
                         <option value="back01.png" selected>サンプル裏面01</option>
                         <option value="back02.png">サンプル裏面02</option>
                         <option value="back03.png">サンプル裏面03</option>
                         <option value="back04.png">サンプル裏面04</option>
                         <option value="back05.png">サンプル裏面05</option>
-                        <option value="upload">PCから画像をアップロード</option>
+                        <option value="solid">単色背景（カラー指定）</option>
                     </select>
+                    <label id="backSolidColorLabel" style="display:none; gap:3px;">色:<input type="color" id="backSolidColor" class="color-input" value="#ffffff"></label>
                 </div>
-                <input type="file" id="backImageUpload" accept="image/*" style="display:none; margin-top:5px;">
-            </div>
+                <div style="margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 11px; color:#666;">自作画像優先読込:</span>
+                    <input type="file" id="backImageUpload" accept="image/*" style="font-size:11px; max-width:200px;">
+                </div>
 
-            <!-- 【修正】保存ボタンエリアの配置順とテキスト変更 -->
-            <div class="download-container" style="margin-top: 10px; background:#e9ecef; padding:8px; border-radius:8px; flex-direction:column; gap:6px;">
-                <div style="display:flex; gap:8px; width:100%;">
-                    <button class="download-btn" id="btn-hd">標準保存</button>
-                    <button class="download-btn" id="btn-lite">軽量保存</button>
-                </div>
-                <div style="width:100%; border-top:1px dashed #ccc; margin:2px 0;"></div>
-                <button class="download-btn" id="btn-back" style="width:100%;">裏面画像を保存</button>
+                <button class="download-btn btn-backend" id="btn-back" style="width:100%;">裏面画像を保存</button>
             </div>
         </div>
 
@@ -363,7 +383,11 @@
         const cardContent = document.getElementById('cardContent');
         const cardBackPreview = document.getElementById('cardBackPreview');
         const cardBackImg = document.getElementById('cardBackImg');
+        
+        let uploadedBgSrc = null;
+        let uploadedBackSrc = null;
 
+        // 【修正】縮小ロジックを表面・裏面の両方に完全連動
         function updateBorder() {
             const hex = document.getElementById('borderColor').value;
             const opacity = document.getElementById('borderOpacity').value / 100;
@@ -380,6 +404,8 @@
             cardBackPreview.style.borderWidth = width + 'px';
 
             const shrinkMode = document.getElementById('borderModeToggle').checked;
+            
+            // 表面縮小
             if (shrinkMode) {
                 cardBg.style.top = '0px'; cardBg.style.left = '0px';
                 cardBg.style.width = `calc(100% + ${width * 2}px)`; cardBg.style.height = `calc(100% + ${width * 2}px)`;
@@ -388,6 +414,17 @@
                 cardBg.style.top = '0'; cardBg.style.left = '0';
                 cardBg.style.width = '100%'; cardBg.style.height = '100%';
                 cardBg.style.transform = 'none';
+            }
+
+            // 裏面縮小（完全連動）
+            if (shrinkMode) {
+                cardBackImg.style.top = '0px'; cardBackImg.style.left = '0px';
+                cardBackImg.style.width = `calc(100% + ${width * 2}px)`; cardBackImg.style.height = `calc(100% + ${width * 2}px)`;
+                cardBackImg.style.transform = `translate(-${width}px, -${width}px)`;
+            } else {
+                cardBackImg.style.top = '0'; cardBackImg.style.left = '0';
+                cardBackImg.style.width = '100%'; cardBackImg.style.height = '100%';
+                cardBackImg.style.transform = 'none';
             }
         }
 
@@ -449,63 +486,82 @@
         const solidColorLabel = document.getElementById('solidColorLabel');
         const solidColor = document.getElementById('solidColor');
 
-        // 【修正】単色背景（solid）の際にsrc属性を空にし、不要なエラーアイコンを完全非表示にする制御
+        // 【修正】表面描画ロジック（アップロード優先 ＆ 単色時のエラーアイコン完全消去）
         function handleBgChange() {
-            const val = bgSelect.value;
-            imageUpload.style.display = 'none';
             solidColorLabel.style.display = 'none';
             cardBg.style.backgroundColor = 'transparent';
 
-            if (val === 'upload') {
-                cardBg.removeAttribute('src');
-                cardBg.style.display = 'none';
-                imageUpload.style.display = 'block';
-            } else if (val === 'solid') {
-                solidColorLabel.style.display = 'flex';
-                cardBg.removeAttribute('src'); // srcを完全除去してアイコン化を防ぐ
-                cardBg.style.display = 'block';
-                cardBg.style.backgroundColor = solidColor.value;
-            } else if (val) {
-                cardBg.src = val + '?t=' + new Date().getTime();
+            if (uploadedBgSrc) {
+                cardBg.setAttribute('src', uploadedBgSrc);
                 cardBg.style.display = 'block';
             } else {
-                cardBg.removeAttribute('src');
-                cardBg.style.display = 'none';
+                const val = bgSelect.value;
+                if (val === 'solid') {
+                    solidColorLabel.style.display = 'flex';
+                    cardBg.removeAttribute('src'); // srcを除去してエラーアイコンを出さない
+                    cardBg.style.display = 'block';
+                    cardBg.style.backgroundColor = solidColor.value;
+                } else {
+                    cardBg.src = val + '?t=' + new Date().getTime();
+                    cardBg.style.display = 'block';
+                }
             }
         }
         bgSelect.addEventListener('change', handleBgChange);
-        solidColor.addEventListener('input', () => { if(bgSelect.value === 'solid') cardBg.style.backgroundColor = solidColor.value; });
+        solidColor.addEventListener('input', () => { if(!uploadedBgSrc && bgSelect.value === 'solid') cardBg.style.backgroundColor = solidColor.value; });
 
         imageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => { cardBg.src = ev.target.result; cardBg.style.display = 'block'; };
+                reader.onload = (ev) => { uploadedBgSrc = ev.target.result; handleBgChange(); };
                 reader.readAsDataURL(file);
+            } else {
+                uploadedBgSrc = null; handleBgChange();
             }
         });
 
         const backSelect = document.getElementById('backSelect');
         const backImageUpload = document.getElementById('backImageUpload');
+        const backSolidColorLabel = document.getElementById('backSolidColorLabel');
+        const backSolidColor = document.getElementById('backSolidColor');
 
-        backSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'upload') {
-                backImageUpload.style.display = 'block';
+        // 【修正】裏面描画ロジック（アップロード優先 ➔ 単色背景 ➔ 各種画像、エラーアイコン完全消去）
+        function handleBackBgChange() {
+            backSolidColorLabel.style.display = 'none';
+            cardBackImg.style.backgroundColor = 'transparent';
+
+            if (uploadedBackSrc) {
+                cardBackImg.setAttribute('src', uploadedBackSrc);
+                cardBackImg.style.display = 'block';
             } else {
-                backImageUpload.style.display = 'none';
-                cardBackImg.src = e.target.value + '?t=' + new Date().getTime();
+                const val = backSelect.value;
+                if (val === 'solid') {
+                    backSolidColorLabel.style.display = 'flex';
+                    cardBackImg.removeAttribute('src'); // srcを除去してエラーアイコンを出さない
+                    cardBackImg.style.display = 'block';
+                    cardBackImg.style.backgroundColor = backSolidColor.value;
+                } else {
+                    cardBackImg.src = val + '?t=' + new Date().getTime();
+                    cardBackImg.style.display = 'block';
+                }
             }
-        });
+        }
+        backSelect.addEventListener('change', handleBackBgChange);
+        backSolidColor.addEventListener('input', () => { if(!uploadedBackSrc && backSelect.value === 'solid') cardBackImg.style.backgroundColor = backSolidColor.value; });
 
         backImageUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (ev) => { cardBackImg.src = ev.target.result; };
+                reader.onload = (ev) => { uploadedBackSrc = ev.target.result; handleBackBgChange(); };
                 reader.readAsDataURL(file);
+            } else {
+                uploadedBackSrc = null; handleBackBgChange();
             }
         });
 
+        // 保存機能
         function saveCard(targetElement, scaleValue, filename) {
             const btn = event.target;
             const originalText = btn.innerText;
